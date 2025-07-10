@@ -10,8 +10,8 @@ const powerKnob = document.getElementById('knob-power');
 const volPercentage = document.getElementById('vol-percentage');
 let previousVolume = parseFloat(volumeSlider.value);
 
-function updateVolumeDisplay(v) {
-  volPercentage.textContent = `${Math.round(v * 100)}%`;
+function updateVolumeDisplay(value) {
+  volPercentage.textContent = `${Math.round(value * 100)}%`;
 }
 
 function powerOff() {
@@ -26,21 +26,44 @@ function powerOn() {
   displayContainer.classList.remove('off');
   radio.classList.remove('off');
   powerKnob.classList.remove('off');
-  presets[3].click(); // inicia en Slogan 94.7 MHz
+  // Inicia la emisora por defecto (Slogan 94.7 MHz)
+  presets[3].click();
 }
 
 presets.forEach(btn => btn.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) return;
+  // Determinar fuentes (OGG/MP3 fallback)
+  const sources = btn.dataset.sources
+    ? btn.dataset.sources.split('|')
+    : [btn.dataset.src];
+  let attempt = 0;
+
+  // Actualizar etiqueta del display antes de reproducir
+  displayText.textContent = btn.dataset.freq;
   presets.forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  displayText.textContent = btn.dataset.freq;
-  player.src = btn.dataset.src;
-  player.play().then(() => radio.classList.add('playing')).catch(() => {});
+
+  function tryPlay() {
+    if (attempt >= sources.length) return;
+    player.src = sources[attempt++];
+    player.load();
+    player.play()
+      .then(() => {
+        radio.classList.add('playing');
+      })
+      .catch(() => {
+        tryPlay(); // Intentar siguiente fuente
+      });
+  }
+
+  tryPlay();
 }));
 
+// Eventos del audio para animación
 player.addEventListener('pause', () => radio.classList.remove('playing'));
 player.addEventListener('ended', () => radio.classList.remove('playing'));
 
+// Control de volumen con slider
 volumeSlider.addEventListener('input', () => {
   if (powerKnob.classList.contains('off')) return;
   previousVolume = parseFloat(volumeSlider.value);
@@ -56,24 +79,7 @@ volumeSlider.addEventListener('input', () => {
   }
 });
 
-muteKnob.addEventListener('click', () => {
-  if (powerKnob.classList.contains('off')) return;
-  if (!player.muted) {
-    previousVolume = parseFloat(volumeSlider.value);
-    player.muted = true;
-    volumeSlider.value = 0;
-    radio.classList.remove('playing');
-  } else {
-    player.muted = false;
-    volumeSlider.value = previousVolume;
-    radio.classList.add('playing');
-  }
-  player.volume = parseFloat(volumeSlider.value);
-  updateVolumeDisplay(player.volume);
-  muteKnob.classList.toggle('off', player.muted);
-});
-
-// Volumen con rueda del mouse
+// Ajustar volumen con rueda del ratón
 radio.addEventListener('wheel', e => {
   if (powerKnob.classList.contains('off')) return;
   e.preventDefault();
@@ -96,6 +102,25 @@ radio.addEventListener('wheel', e => {
   }
 });
 
+// Botón Mute
+muteKnob.addEventListener('click', () => {
+  if (powerKnob.classList.contains('off')) return;
+  if (!player.muted) {
+    previousVolume = parseFloat(volumeSlider.value);
+    player.muted = true;
+    volumeSlider.value = 0;
+    radio.classList.remove('playing');
+  } else {
+    player.muted = false;
+    volumeSlider.value = previousVolume;
+    radio.classList.add('playing');
+  }
+  player.volume = parseFloat(volumeSlider.value);
+  updateVolumeDisplay(player.volume);
+  muteKnob.classList.toggle('off', player.muted);
+});
+
+// Botón Power
 powerKnob.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) {
     powerOn();
@@ -105,10 +130,10 @@ powerKnob.addEventListener('click', () => {
   }
 });
 
-// Registrar service worker (PWA)
+// Registrar Service Worker (PWA)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js')
-    .catch(err => console.warn('SW error:', err));
+    .catch(err => console.warn('Error registrando SW:', err));
 }
 
 // Estado inicial: apagado
