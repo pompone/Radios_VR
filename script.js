@@ -36,7 +36,9 @@ presets.forEach(btn => btn.addEventListener('click', () => {
   btn.classList.add('active');
   displayText.textContent = btn.dataset.freq;
   player.src = btn.dataset.src;
-  player.play().then(() => radio.classList.add('playing')).catch(() => {});
+  player.play()
+    .then(() => radio.classList.add('playing'))
+    .catch(() => {});
 }));
 
 player.addEventListener('pause', () => radio.classList.remove('playing'));
@@ -54,6 +56,8 @@ volumeSlider.addEventListener('input', () => {
     player.muted = false;
     muteKnob.classList.remove('off');
   }
+  // Si está muteado, detenemos la animación del parlante
+  if (player.muted) radio.classList.remove('playing');
 });
 
 muteKnob.addEventListener('click', () => {
@@ -69,6 +73,12 @@ muteKnob.addEventListener('click', () => {
   player.volume = volumeSlider.value;
   updateVolumeDisplay(volumeSlider.value);
   muteKnob.classList.toggle('off', player.muted);
+  // Detener o reanudar animación del parlante según mute
+  if (player.muted) {
+    radio.classList.remove('playing');
+  } else {
+    radio.classList.add('playing');
+  }
 });
 
 powerKnob.addEventListener('click', () => {
@@ -84,3 +94,4 @@ powerKnob.addEventListener('click', () => {
 powerKnob.classList.add('off');
 powerOff();
 updateVolumeDisplay(volumeSlider.value);
+
