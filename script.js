@@ -10,9 +10,8 @@ const powerKnob = document.getElementById('knob-power');
 const volPercentage = document.getElementById('vol-percentage');
 let previousVolume = parseFloat(volumeSlider.value);
 
-function updateVolumeDisplay(value) {
-  const percent = Math.round(value * 100);
-  volPercentage.textContent = `${percent}%`;
+function updateVolumeDisplay(v) {
+  volPercentage.textContent = `${Math.round(v * 100)}%`;
 }
 
 function powerOff() {
@@ -36,9 +35,7 @@ presets.forEach(btn => btn.addEventListener('click', () => {
   btn.classList.add('active');
   displayText.textContent = btn.dataset.freq;
   player.src = btn.dataset.src;
-  player.play()
-    .then(() => radio.classList.add('playing'))
-    .catch(() => {});
+  player.play().then(() => radio.classList.add('playing')).catch(() => {});
 }));
 
 player.addEventListener('pause', () => radio.classList.remove('playing'));
@@ -47,17 +44,16 @@ player.addEventListener('ended', () => radio.classList.remove('playing'));
 volumeSlider.addEventListener('input', () => {
   if (powerKnob.classList.contains('off')) return;
   previousVolume = parseFloat(volumeSlider.value);
-  player.volume = volumeSlider.value;
-  updateVolumeDisplay(volumeSlider.value);
+  player.volume = previousVolume;
+  updateVolumeDisplay(previousVolume);
   if (player.volume === 0) {
     player.muted = true;
     muteKnob.classList.add('off');
+    radio.classList.remove('playing');
   } else {
     player.muted = false;
     muteKnob.classList.remove('off');
   }
-  // Si está muteado, detenemos la animación del parlante
-  if (player.muted) radio.classList.remove('playing');
 });
 
 muteKnob.addEventListener('click', () => {
@@ -66,17 +62,36 @@ muteKnob.addEventListener('click', () => {
     previousVolume = parseFloat(volumeSlider.value);
     player.muted = true;
     volumeSlider.value = 0;
+    radio.classList.remove('playing');
   } else {
     player.muted = false;
     volumeSlider.value = previousVolume;
+    radio.classList.add('playing');
   }
-  player.volume = volumeSlider.value;
-  updateVolumeDisplay(volumeSlider.value);
+  player.volume = parseFloat(volumeSlider.value);
+  updateVolumeDisplay(player.volume);
   muteKnob.classList.toggle('off', player.muted);
-  // Detener o reanudar animación del parlante según mute
-  if (player.muted) {
+});
+
+// Volumen con rueda del mouse
+radio.addEventListener('wheel', e => {
+  if (powerKnob.classList.contains('off')) return;
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 0.05 : -0.05;
+  let newVol = player.volume + delta;
+  newVol = Math.min(1, Math.max(0, newVol));
+  player.volume = newVol;
+  volumeSlider.value = newVol;
+  updateVolumeDisplay(newVol);
+  if (newVol === 0) {
+    player.muted = true;
+    muteKnob.classList.add('off');
     radio.classList.remove('playing');
   } else {
+    if (player.muted) {
+      player.muted = false;
+      muteKnob.classList.remove('off');
+    }
     radio.classList.add('playing');
   }
 });
@@ -90,8 +105,14 @@ powerKnob.addEventListener('click', () => {
   }
 });
 
+// Registrar service worker (PWA)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+    .catch(err => console.warn('SW error:', err));
+}
+
 // Estado inicial: apagado
 powerKnob.classList.add('off');
 powerOff();
-updateVolumeDisplay(volumeSlider.value);
+updateVolumeDisplay(parseFloat(volumeSlider.value));
 
