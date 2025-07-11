@@ -32,19 +32,23 @@ function powerOn() {
 
 presets.forEach(btn => btn.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) return;
-  // Determinar fuentes (OGG/MP3 fallback)
+
   const sources = btn.dataset.sources
     ? btn.dataset.sources.split('|')
     : [btn.dataset.src];
   let attempt = 0;
 
-  // Actualizar etiqueta del display antes de reproducir
   displayText.textContent = btn.dataset.freq;
   presets.forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
   function tryPlay() {
-    if (attempt >= sources.length) return;
+    if (attempt >= sources.length) {
+      displayText.textContent = 'Sin señal ';
+      radio.classList.remove('playing');
+      return;
+    }
+
     player.src = sources[attempt++];
     player.load();
     player.play()
@@ -52,18 +56,16 @@ presets.forEach(btn => btn.addEventListener('click', () => {
         radio.classList.add('playing');
       })
       .catch(() => {
-        tryPlay(); // Intentar siguiente fuente
+        tryPlay();
       });
   }
 
   tryPlay();
 }));
 
-// Eventos del audio para animación
 player.addEventListener('pause', () => radio.classList.remove('playing'));
 player.addEventListener('ended', () => radio.classList.remove('playing'));
 
-// Control de volumen con slider
 volumeSlider.addEventListener('input', () => {
   if (powerKnob.classList.contains('off')) return;
   previousVolume = parseFloat(volumeSlider.value);
@@ -79,7 +81,6 @@ volumeSlider.addEventListener('input', () => {
   }
 });
 
-// Ajustar volumen con rueda del ratón
 radio.addEventListener('wheel', e => {
   if (powerKnob.classList.contains('off')) return;
   e.preventDefault();
@@ -102,7 +103,6 @@ radio.addEventListener('wheel', e => {
   }
 });
 
-// Botón Mute
 muteKnob.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) return;
   if (!player.muted) {
@@ -120,7 +120,6 @@ muteKnob.addEventListener('click', () => {
   muteKnob.classList.toggle('off', player.muted);
 });
 
-// Botón Power
 powerKnob.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) {
     powerOn();
@@ -130,14 +129,13 @@ powerKnob.addEventListener('click', () => {
   }
 });
 
-// Registrar Service Worker (PWA)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js')
     .catch(err => console.warn('Error registrando SW:', err));
 }
 
-// Estado inicial: apagado
 powerKnob.classList.add('off');
 powerOff();
 updateVolumeDisplay(parseFloat(volumeSlider.value));
+
 
