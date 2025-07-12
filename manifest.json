@@ -1,19 +1,15 @@
 {
-  "name": "Radios de Villa Regina",
-  "short_name": "RadiosVR",
-  "description": "Radio web con emisoras locales de Villa Regina",
-  "start_url": "./",
+  "name": "Radios VR",
+  "short_name": "Radios VR",
+  "start_url": "/Radios_VR/",
+  "scope": "/Radios_VR/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#cccccc",
+  "background_color": "#333333",
   "theme_color": "#333333",
-  "scope": "./",
-  "lang": "es",
-  "categories": ["entertainment", "music"],
   "icons": [
     {
       "src": "icono.ico",
-      "sizes": "16x16 32x32 48x48",
+      "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     }
   ]
