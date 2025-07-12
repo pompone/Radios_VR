@@ -1,13 +1,13 @@
 {
-  "name": "Radios Villa Regina",
-  "short_name": "RadiosVR",
-  "lang": "es-AR",
+  "name": "Radio Web Realista",
+  "short_name": "Radio VR",
   "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#000000",
-  "theme_color": "#333333",
-  "description": "Escuchá las radios locales de Villa Regina en vivo desde tu celular.",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "description": "Escuchá las principales radios de Villa Regina en vivo desde una app moderna, rápida y ligera.",
+  "lang": "es-AR",
   "icons": [
     {
       "src": "icono.ico",
@@ -39,19 +39,7 @@
       "form_factor": "narrow"
     }
   ],
-  "categories": ["music", "radio", "local"],
-  "shortcuts": [
-    {
-      "name": "Radio Noventa",
-      "short_name": "90.1",
-      "url": "/#noventa",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "LU16",
-      "short_name": "92.7",
-      "url": "/#lu16",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
-    }
-  ]
+  "categories": ["music", "radio", "entertainment", "news"],
+  "dir": "ltr",
+  "scope": "./"
 }
