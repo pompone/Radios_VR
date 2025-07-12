@@ -1,16 +1,57 @@
 {
-  "name": "Radios VR",
-  "short_name": "Radios VR",
-  "start_url": "/Radios_VR/",
-  "scope": "/Radios_VR/",
+  "name": "Radios Villa Regina",
+  "short_name": "RadiosVR",
+  "lang": "es-AR",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#333333",
+  "orientation": "portrait",
+  "background_color": "#000000",
   "theme_color": "#333333",
+  "description": "Escuchá las radios locales de Villa Regina en vivo desde tu celular.",
   "icons": [
     {
       "src": "icono.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["music", "radio", "local"],
+  "shortcuts": [
+    {
+      "name": "Radio Noventa",
+      "short_name": "90.1",
+      "url": "/#noventa",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "LU16",
+      "short_name": "92.7",
+      "url": "/#lu16",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
