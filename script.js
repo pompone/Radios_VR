@@ -130,7 +130,8 @@ powerKnob.addEventListener('click', () => {
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js')
+  navigator.serviceWorker.register('/Radios_VR/service-worker.js')
+
     .catch(err => console.warn('Error registrando SW:', err));
 }
 
