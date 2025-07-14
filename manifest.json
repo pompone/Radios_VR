@@ -46,5 +46,52 @@
   ],
   "launch_handler": {
     "client_mode": "auto"
-  }
+  },
+  "display_override": ["window-controls-overlay", "standalone"],
+  "edge_side_panel": {
+    "preferred_width": 300
+  },
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "audio/*": [".mp3", ".wav"]
+      }
+    }
+  ],
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+radio",
+      "url": "https://radiosvr.com/?stream=%s"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Inicio",
+      "url": "./",
+      "description": "Ir a la página principal",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "background_sync": {
+    "tag": "sync-radio-content"
+  },
+  "periodic_sync": {
+    "tag": "sync-radio-updates",
+    "min_interval": 86400
+  },
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope_extensions": []
 }
+
