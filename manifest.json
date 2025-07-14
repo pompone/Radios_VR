@@ -9,7 +9,10 @@
   "theme_color": "#333333",
   "scope": "./",
   "lang": "es",
+  "dir": "ltr",
+  "id": "/",
   "categories": ["entertainment", "music"],
+  "iarc_rating_id": "e10+",
   "icons": [
     {
       "src": "./icono-512.png",
@@ -40,5 +43,8 @@
       "type": "image/png",
       "form_factor": "narrow"
     }
-  ]
+  ],
+  "launch_handler": {
+    "client_mode": "auto"
+  }
 }
