@@ -13,17 +13,19 @@ let previousVolume = parseFloat(volumeSlider.value);
 function updateVolumeDisplay(value) {
   volPercentage.textContent = `${Math.round(value * 100)}%`;
 
-  // Cambiar color del slider según el volumen
-  const minColor = [173, 216, 230]; // celeste pálido (lightblue)
-  const maxColor = [0, 0, 255];     // azul intenso
+  // Color dinámico de volumen
+  const minColor = [173, 216, 230]; // celeste
+  const maxColor = [0, 0, 255];     // azul
 
   const mix = minColor.map((c, i) =>
     Math.round(c + (maxColor[i] - c) * value)
   );
-
   const color = `rgb(${mix[0]}, ${mix[1]}, ${mix[2]})`;
-  volumeSlider.style.background = color;
+  const percentage = Math.round(value * 100);
+
+  volumeSlider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percentage}%, #444 ${percentage}%, #444 100%)`;
 }
+
 
 function powerOff() {
   player.pause();
