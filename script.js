@@ -1,47 +1,73 @@
-// --- script.js (versión con soporte Chromecast) ---
-const radio           = document.getElementById('radio');
-const displayContainer= document.getElementById('display');
-const displayText     = document.getElementById('display-text');
-const presets         = document.querySelectorAll('.preset');
-const player          = document.getElementById('player');
-const volumeSlider    = document.getElementById('volume');
-const muteKnob        = document.getElementById('knob-mute');
-const powerKnob       = document.getElementById('knob-power');
-const volPercentage   = document.getElementById('vol-percentage');
-let   previousVolume  = parseFloat(volumeSlider.value);
+// -----------------------------------------------------------------------------
+// script.js  –  Radio Web con soporte Chromecast
+// -----------------------------------------------------------------------------
+const radio            = document.getElementById('radio');
+const displayContainer = document.getElementById('display');
+const displayText      = document.getElementById('display-text');
+const presets          = document.querySelectorAll('.preset');
+const player           = document.getElementById('player');
+const volumeSlider     = document.getElementById('volume');
+const muteKnob         = document.getElementById('knob-mute');
+const powerKnob        = document.getElementById('knob-power');
+const volPercentage    = document.getElementById('vol-percentage');
+const castControl      = document.getElementById('cast-control');  // ← nuevo
+let   previousVolume   = parseFloat(volumeSlider.value);
 
-/* ---------- Google Cast ---------- */
+/* ---------------------------------------------------------------------------
+ * Chromecast helpers
+ * --------------------------------------------------------------------------- */
+function updateCastVisibility(state) {
+  // Ocultamos el botón si no hay dispositivos; lo mostramos en cualquier otro caso
+  if (state === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+    castControl.classList.add('cast-hidden');
+  } else {
+    castControl.classList.remove('cast-hidden');
+  }
+}
+
+function sendToCast(sourceUrl, mime = 'audio/mpeg') {
+  const ctx     = cast && cast.framework ? cast.framework.CastContext.getInstance() : null;
+  const session = ctx && ctx.getCurrentSession();
+  if (!session) return;                            // No hay sesión activa → nada que hacer
+
+  const mediaInfo = new chrome.cast.media.MediaInfo(sourceUrl, mime);
+  const request   = new chrome.cast.media.LoadRequest(mediaInfo);
+  session.loadMedia(request).catch(err => console.warn('Error al enviar al Cast:', err));
+}
+
 // Se ejecuta cuando la librería cast_sender ya está disponible
 window.__onGCastApiAvailable = function (isAvailable) {
   if (!isAvailable) return;
+
   const context = cast.framework.CastContext.getInstance();
   context.setOptions({
-    receiverApplicationId: 'CC1AD845',         // Default Media Receiver ID :contentReference[oaicite:1]{index=1}
+    receiverApplicationId: 'CC1AD845',               // Default Media Receiver
     autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
   });
+
+  // Visibilidad inicial del botón
+  updateCastVisibility(context.getCastState());
+
+  // Visibilidad ante cambios (por ejemplo, un Chromecast se enciende o apaga)
+  context.addEventListener(
+    cast.framework.CastContextEventType.CAST_STATE_CHANGED,
+    ev => updateCastVisibility(ev.castState)
+  );
 
   // Si la sesión empieza después de que el usuario ya esté escuchando:
   context.addEventListener(
     cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-    (ev) => {
+    ev => {
       if (ev.sessionState === cast.framework.SessionState.SESSION_STARTED) {
-        sendToCast(player.src);               // manda la emisora actual
+        sendToCast(player.src);                    // envía la emisora en curso
       }
     }
   );
 };
 
-function sendToCast(sourceUrl, mime = 'audio/mpeg') {
-  const castContext = cast && cast.framework ? cast.framework.CastContext.getInstance() : null;
-  const session     = castContext && castContext.getCurrentSession();
-  if (!session) return;                        // no hay Chromecast conectado
-
-  const mediaInfo   = new chrome.cast.media.MediaInfo(sourceUrl, mime);
-  const request     = new chrome.cast.media.LoadRequest(mediaInfo);
-  session.loadMedia(request).catch(err => console.warn('Error al enviar al Cast:', err));
-}
-/* --------------------------------- */
-
+/* ---------------------------------------------------------------------------
+ * Utilidades de UI
+ * --------------------------------------------------------------------------- */
 function updateVolumeDisplay(value) {
   volPercentage.textContent = `${Math.round(value * 100)}%`;
 }
@@ -58,10 +84,12 @@ function powerOn() {
   displayContainer.classList.remove('off');
   radio.classList.remove('off');
   powerKnob.classList.remove('off');
-  presets[3].click(); // Slogan 94.7 MHz por defecto
+  presets[3].click(); // Slogan 94.7 MHz por defecto
 }
 
-/* --- Presets --- */
+/* ---------------------------------------------------------------------------
+ * Presets
+ * --------------------------------------------------------------------------- */
 presets.forEach(btn => btn.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) return;
 
@@ -85,21 +113,23 @@ presets.forEach(btn => btn.addEventListener('click', () => {
     player.play()
       .then(() => {
         radio.classList.add('playing');
-        sendToCast(player.src);               // también lanza al Chromecast
+        sendToCast(player.src);                   // → Chromecast
       })
       .catch(tryPlay);
   }
   tryPlay();
 }));
 
-/* --- Player & volumen --- */
+/* ---------------------------------------------------------------------------
+ * Player & volumen
+ * --------------------------------------------------------------------------- */
 player.addEventListener('pause', () => radio.classList.remove('playing'));
 player.addEventListener('ended', () => radio.classList.remove('playing'));
 
 volumeSlider.addEventListener('input', () => {
   if (powerKnob.classList.contains('off')) return;
-  previousVolume = parseFloat(volumeSlider.value);
-  player.volume  = previousVolume;
+  previousVolume   = parseFloat(volumeSlider.value);
+  player.volume    = previousVolume;
   updateVolumeDisplay(previousVolume);
   if (player.volume === 0) {
     player.muted = true;
@@ -111,16 +141,17 @@ volumeSlider.addEventListener('input', () => {
   }
 });
 
-/* --- Rueda del mouse para volumen --- */
+/* Rueda del mouse para volumen (desktop) */
 radio.addEventListener('wheel', e => {
   if (powerKnob.classList.contains('off')) return;
   e.preventDefault();
-  const delta = e.deltaY < 0 ? 0.05 : -0.05;
-  let   newVol = player.volume + delta;
-  newVol = Math.min(1, Math.max(0, newVol));
-  player.volume    = newVol;
+  const delta  = e.deltaY < 0 ? 0.05 : -0.05;
+  let newVol   = player.volume + delta;
+  newVol       = Math.min(1, Math.max(0, newVol));
+  player.volume      = newVol;
   volumeSlider.value = newVol;
   updateVolumeDisplay(newVol);
+
   if (newVol === 0) {
     player.muted = true;
     muteKnob.classList.add('off');
@@ -134,16 +165,16 @@ radio.addEventListener('wheel', e => {
   }
 });
 
-/* --- Mute --- */
+/* Mute */
 muteKnob.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) return;
   if (!player.muted) {
-    previousVolume = parseFloat(volumeSlider.value);
-    player.muted   = true;
+    previousVolume     = parseFloat(volumeSlider.value);
+    player.muted       = true;
     volumeSlider.value = 0;
     radio.classList.remove('playing');
   } else {
-    player.muted   = false;
+    player.muted       = false;
     volumeSlider.value = previousVolume;
     radio.classList.add('playing');
   }
@@ -152,7 +183,7 @@ muteKnob.addEventListener('click', () => {
   muteKnob.classList.toggle('off', player.muted);
 });
 
-/* --- Power --- */
+/* Power */
 powerKnob.addEventListener('click', () => {
   if (powerKnob.classList.contains('off')) {
     powerOn();
@@ -162,7 +193,9 @@ powerKnob.addEventListener('click', () => {
   }
 });
 
-/* --- Service Worker & arranque --- */
+/* ---------------------------------------------------------------------------
+ * Service Worker & arranque
+ * --------------------------------------------------------------------------- */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js')
     .catch(err => console.warn('Error registrando SW:', err));
@@ -171,5 +204,3 @@ if ('serviceWorker' in navigator) {
 powerKnob.classList.add('off');
 powerOff();
 updateVolumeDisplay(parseFloat(volumeSlider.value));
-
-
