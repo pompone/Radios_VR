@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------
-// script.js  –  Radio Web con soporte Chromecast
+// script.js  –  Radio Web con soporte Chromecast (v2)
 // -----------------------------------------------------------------------------
 const radio            = document.getElementById('radio');
 const displayContainer = document.getElementById('display');
@@ -10,14 +10,14 @@ const volumeSlider     = document.getElementById('volume');
 const muteKnob         = document.getElementById('knob-mute');
 const powerKnob        = document.getElementById('knob-power');
 const volPercentage    = document.getElementById('vol-percentage');
-const castControl      = document.getElementById('cast-control');  // ← nuevo
+const castControl      = document.getElementById('cast-control');
 let   previousVolume   = parseFloat(volumeSlider.value);
+let   currentTitle     = '';   // ← nombre de la emisora para el Cast
 
 /* ---------------------------------------------------------------------------
  * Chromecast helpers
  * --------------------------------------------------------------------------- */
 function updateCastVisibility(state) {
-  // Ocultamos el botón si no hay dispositivos; lo mostramos en cualquier otro caso
   if (state === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
     castControl.classList.add('cast-hidden');
   } else {
@@ -25,41 +25,60 @@ function updateCastVisibility(state) {
   }
 }
 
-function sendToCast(sourceUrl, mime = 'audio/mpeg') {
+function sendToCast(sourceUrl, title = 'Radio VR') {
   const ctx     = cast && cast.framework ? cast.framework.CastContext.getInstance() : null;
   const session = ctx && ctx.getCurrentSession();
-  if (!session) return;                            // No hay sesión activa → nada que hacer
+  if (!session) return;         // No hay sesión activa
+
+  // MIME según extensión
+  const mime = sourceUrl.endsWith('.ogg') ? 'audio/ogg' : 'audio/mpeg';
 
   const mediaInfo = new chrome.cast.media.MediaInfo(sourceUrl, mime);
+  mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;           // es radio en vivo :contentReference[oaicite:0]{index=0}
+
+  // Metadatos: título + carátula
+  const metadata  = new chrome.cast.media.GenericMediaMetadata();     // :contentReference[oaicite:1]{index=1}
+  metadata.title  = title;
+  metadata.images = [ new chrome.cast.Image(window.location.origin + '/icon-512.png') ];
+  mediaInfo.metadata = metadata;
+
   const request   = new chrome.cast.media.LoadRequest(mediaInfo);
-  session.loadMedia(request).catch(err => console.warn('Error al enviar al Cast:', err));
+  session.loadMedia(request)
+    .then(() => player.pause())   // silencia el dispositivo local
+    .catch(err => console.warn('Error al enviar al Cast:', err));
 }
 
-// Se ejecuta cuando la librería cast_sender ya está disponible
 window.__onGCastApiAvailable = function (isAvailable) {
   if (!isAvailable) return;
 
   const context = cast.framework.CastContext.getInstance();
   context.setOptions({
-    receiverApplicationId: 'CC1AD845',               // Default Media Receiver
+    receiverApplicationId: 'CC1AD845',   // Default Media Receiver
     autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
   });
 
-  // Visibilidad inicial del botón
   updateCastVisibility(context.getCastState());
 
-  // Visibilidad ante cambios (por ejemplo, un Chromecast se enciende o apaga)
   context.addEventListener(
     cast.framework.CastContextEventType.CAST_STATE_CHANGED,
     ev => updateCastVisibility(ev.castState)
   );
 
-  // Si la sesión empieza después de que el usuario ya esté escuchando:
   context.addEventListener(
     cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
     ev => {
-      if (ev.sessionState === cast.framework.SessionState.SESSION_STARTED) {
-        sendToCast(player.src);                    // envía la emisora en curso
+      switch (ev.sessionState) {
+        case cast.framework.SessionState.SESSION_STARTED:
+        case cast.framework.SessionState.SESSION_RESUMED:
+          sendToCast(player.src, currentTitle);   // manda la emisora actual
+          player.pause();                         // y detiene el audio local
+          break;
+        case cast.framework.SessionState.SESSION_ENDED:
+          // Si la radio sigue encendida, retomamos audio local
+          if (!powerKnob.classList.contains('off')) {
+            player.play().catch(() => {});
+          }
+          break;
       }
     }
   );
@@ -98,7 +117,8 @@ presets.forEach(btn => btn.addEventListener('click', () => {
         : [btn.dataset.src];
   let attempt = 0;
 
-  displayText.textContent = btn.dataset.freq;
+  currentTitle            = btn.dataset.freq;          // ← guardamos título
+  displayText.textContent = currentTitle;
   presets.forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
@@ -110,10 +130,17 @@ presets.forEach(btn => btn.addEventListener('click', () => {
     }
     player.src = sources[attempt++];
     player.load();
-    player.play()
+
+    // ¿Estamos casteando? → no reproducir localmente
+    const ctx = cast && cast.framework ? cast.framework.CastContext.getInstance() : null;
+    const casting = ctx && ctx.getCastState() === cast.framework.CastState.CONNECTED;
+
+    const playPromise = casting ? Promise.resolve() : player.play();
+
+    playPromise
       .then(() => {
         radio.classList.add('playing');
-        sendToCast(player.src);                   // → Chromecast
+        sendToCast(player.src, currentTitle);     // actualiza Chromecast (o lo inicia)
       })
       .catch(tryPlay);
   }
@@ -128,8 +155,8 @@ player.addEventListener('ended', () => radio.classList.remove('playing'));
 
 volumeSlider.addEventListener('input', () => {
   if (powerKnob.classList.contains('off')) return;
-  previousVolume   = parseFloat(volumeSlider.value);
-  player.volume    = previousVolume;
+  previousVolume = parseFloat(volumeSlider.value);
+  player.volume  = previousVolume;
   updateVolumeDisplay(previousVolume);
   if (player.volume === 0) {
     player.muted = true;
@@ -141,7 +168,7 @@ volumeSlider.addEventListener('input', () => {
   }
 });
 
-/* Rueda del mouse para volumen (desktop) */
+/* Rueda del mouse (desktop) */
 radio.addEventListener('wheel', e => {
   if (powerKnob.classList.contains('off')) return;
   e.preventDefault();
