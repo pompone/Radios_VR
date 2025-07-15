@@ -12,10 +12,7 @@ let previousVolume = parseFloat(volumeSlider.value);
 
 function updateVolumeDisplay(value) {
   volPercentage.textContent = `${Math.round(value * 100)}%`;
-  volumeSlider.style.background = ''; // Quita cualquier estilo dinámico anterior
 }
-
-
 
 function powerOff() {
   player.pause();
@@ -29,7 +26,8 @@ function powerOn() {
   displayContainer.classList.remove('off');
   radio.classList.remove('off');
   powerKnob.classList.remove('off');
-  presets[3].click(); // emisora por defecto
+  // Inicia la emisora por defecto (Slogan 94.7 MHz)
+  presets[3].click();
 }
 
 presets.forEach(btn => btn.addEventListener('click', () => {
@@ -54,8 +52,12 @@ presets.forEach(btn => btn.addEventListener('click', () => {
     player.src = sources[attempt++];
     player.load();
     player.play()
-      .then(() => radio.classList.add('playing'))
-      .catch(() => tryPlay());
+      .then(() => {
+        radio.classList.add('playing');
+      })
+      .catch(() => {
+        tryPlay();
+      });
   }
 
   tryPlay();
@@ -128,7 +130,7 @@ powerKnob.addEventListener('click', () => {
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/Radios_VR/service-worker.js')
+  navigator.serviceWorker.register('service-worker.js')
     .catch(err => console.warn('Error registrando SW:', err));
 }
 
