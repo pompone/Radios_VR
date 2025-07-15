@@ -118,10 +118,6 @@ body {
 #knob-mute.off {
   background: linear-gradient(145deg,#6f6,#3c3) !important;
 }
-.cast-hidden {
-  display: none;          /* el resto de la fila se reacomoda solo */
-}
-
 .icon {
   width: 20px;
   height: 20px;

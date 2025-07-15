@@ -5,33 +5,17 @@
   <link rel="icon" href="icono.ico" type="image/x-icon">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Radios de Villa Regina</title>
-
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#333333">
-
-  <!-- Estilos -->
   <link rel="stylesheet" href="style.css">
-
-  <!-- Google Cast sender SDK -->
-  <script type="text/javascript"
-          src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1">
-  </script>
 </head>
-
 <body>
   <div class="radio off" id="radio">
-    <!-- Pantalla -->
     <div class="display off" id="display">
       <span id="display-text">Off</span>
     </div>
-
-    <!-- Parlante decorativo -->
     <div class="speaker"></div>
-
-    <!-- Controles principales -->
     <div class="controls">
-      <!-- Mute -->
       <div class="control">
         <div class="knob" id="knob-mute" title="Mute">
           <svg class="icon" viewBox="0 0 24 24">
@@ -42,15 +26,6 @@
         </div>
         <div class="knob-label">Mute</div>
       </div>
-
-      <!-- Cast: se oculta hasta que haya dispositivos disponibles -->
-      <div class="control cast-hidden" id="cast-control">
-        <google-cast-launcher id="cast-button"
-            style="height:40px;width:40px;"></google-cast-launcher>
-        <div class="knob-label">Cast</div>
-      </div>
-
-      <!-- Power -->
       <div class="control">
         <div class="knob off" id="knob-power" title="Power">
           <svg class="icon" viewBox="0 0 24 24">
@@ -60,9 +35,7 @@
         </div>
         <div class="knob-label">Power</div>
       </div>
-    </div> <!-- /controls -->
-
-    <!-- Presets -->
+    </div>
     <div class="presets">
       <button class="preset"
         data-freq="Radio Noventa 90.1 MHz"
@@ -70,48 +43,21 @@
           https://cast.tunzilla.com/http://www.radionoventa.com.ar:8000/Noventa_en_vivo.ogg|
           https://cast.tunzilla.com/http://www.radionoventa.com.ar:8000/Noventa_en_vivo.mp3">90.1</button>
 
-      <button class="preset"
-        data-freq="LU16 92.7 MHz"
-        data-src="https://radio01.ferozo.com/proxy/ra01001162?mp=/stream">92.7</button>
 
-      <button class="preset"
-        data-freq="Radio del Sol 93.7 MHz"
-        data-src="https://stream.hego.com.ar/listen/radio_del_sol/sol.mp3">93.7</button>
-
-      <button class="preset"
-        data-freq="Slogan 94.7 MHz"
-        data-sources="
-          https://stream.hego.com.ar/listen/radio_slogan/slogan.ogg|
-          https://stream.hego.com.ar/listen/radio_slogan/slogan.mp3">94.7</button>
-
-      <button class="preset"
-        data-freq="Patagonia 95.9 MHz"
-        data-src="https://streaming1.locucionar.com/proxy/patagoniafm?mp=/stream">95.9</button>
-
-      <button class="preset"
-        data-freq="Eclipse 101.5 MHz"
-        data-src="http://01.solumedia.com.ar:8746/stream">101.5</button>
+      <button class="preset" data-freq="LU16 92.7 MHz" data-src="https://radio01.ferozo.com/proxy/ra01001162?mp=/stream">92.7</button>
+      <button class="preset" data-freq="Radio del Sol 93.7 MHz" data-src="https://stream.hego.com.ar/listen/radio_del_sol/sol.mp3">93.7</button>
+      <button class="preset" data-freq="Slogan 94.7 MHz" data-src="https://stream.hego.com.ar/listen/radio_slogan/slogan.mp3">94.7</button>
+      <button class="preset" data-freq="Patagonia 95.9 MHz" data-src="https://streaming1.locucionar.com/proxy/patagoniafm?mp=/stream">95.9</button>
+      <button class="preset" data-freq="Eclipse 101.5 MHz" data-src="http://01.solumedia.com.ar:8746/stream">101.5</button>
     </div>
-
-    <!-- Volumen -->
     <div class="volume">
       <label for="volume">Volumen</label>
       <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
       <div class="vol-percentage" id="vol-percentage">100%</div>
     </div>
-  </div> <!-- /radio -->
-
-  <!-- Reproductor invisible -->
-  <audio id="player"></audio>
-
-  <!-- Footer -->
-  <div class="footer">
-    Desarrollado por
-    <a href="https://pompone.github.io" target="_blank">Alejandro M. Pompone</a>
   </div>
-
-  <!-- Lógica principal -->
+  <audio id="player"></audio>
+  <div class="footer">Desarrollado por <a href="https://pompone.github.io/CV_Pompone.github.io" target="_blank">Alejandro M. Pompone</a></div>
   <script src="script.js"></script>
 </body>
 </html>
-
