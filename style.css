@@ -10,8 +10,10 @@ body {
   background: #ccc;
   font-family: sans-serif;
 }
+
 .radio {
-  width: 360px;
+  width: 90%;
+  max-width: 480px;
   padding: 20px;
   background: #ddd;
   border-radius: 10px;
@@ -21,9 +23,11 @@ body {
   align-items: center;
   transition: filter 0.5s ease;
 }
+
 .radio.off {
   filter: brightness(70%) grayscale(30%);
 }
+
 .display {
   width: 70%;
   height: 30px;
@@ -36,25 +40,37 @@ body {
   box-shadow: inset 0 0 5px #0f0;
   transition: box-shadow 0.5s ease;
 }
+
 .display.off {
   box-shadow: inset 0 0 2px #000;
 }
+
 .display span {
   position: absolute;
   white-space: nowrap;
   color: #0f0;
   font-family: 'Digital-7', monospace;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   display: block;
   animation: scrollText 8s linear infinite;
 }
+
 .display.off span {
   animation: flickerDisplay 3s step-end infinite !important;
   left: 50%;
   transform: translateX(-50%);
 }
-@keyframes scrollText { 0% { left: 100%; } 100% { left: -100%; } }
-@keyframes flickerDisplay { 0%,50% { opacity: 0; } 51%,100% { opacity: 1; } }
+
+@keyframes scrollText {
+  0% { left: 100%; }
+  100% { left: -100%; }
+}
+
+@keyframes flickerDisplay {
+  0%, 50% { opacity: 0; }
+  51%, 100% { opacity: 1; }
+}
+
 .speaker {
   width: 120px;
   height: 120px;
@@ -68,6 +84,7 @@ body {
   margin-bottom: 15px;
   transition: transform 0.1s;
 }
+
 .speaker::after {
   content: '';
   position: absolute;
@@ -80,10 +97,16 @@ body {
   background: radial-gradient(circle at center, #555 0%, #222 80%);
   box-shadow: inset -3px -3px 10px rgba(0,0,0,0.5);
 }
+
 .playing .speaker {
   animation: pulse 1s infinite;
 }
-@keyframes pulse { 0%{transform: scale(1);}50%{transform: scale(1.05);}100%{transform: scale(1);} }
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 
 .controls {
   width: 100%;
@@ -91,11 +114,13 @@ body {
   justify-content: space-around;
   margin-bottom: 10px;
 }
+
 .control {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 .knob {
   width: 40px;
   height: 40px;
@@ -109,35 +134,43 @@ body {
   align-items: center;
   transition: background 0.2s, transform 0.1s ease;
 }
+
 .knob:hover {
   transform: translateY(-2px);
 }
+
 .knob.off {
   background: linear-gradient(145deg,#f66,#c33);
 }
+
 #knob-mute.off {
   background: linear-gradient(145deg,#6f6,#3c3) !important;
 }
+
 .icon {
   width: 20px;
   height: 20px;
   stroke: currentColor;
   fill: none;
 }
+
 .knob-label {
   margin-top: 5px;
   font-size: 0.75rem;
   color: #333;
 }
+
 .presets {
   display: flex;
   justify-content: space-between;
   width: 100%;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
+
 .preset {
   flex: 1;
-  margin: 0 3px;
+  margin: 3px;
   padding: 8px 0;
   background: #888;
   color: #fff;
@@ -147,35 +180,84 @@ body {
   cursor: pointer;
   transition: background 0.2s;
   font-size: 0.9rem;
+  min-width: 70px;
 }
-.preset.active { background: #f60; }
-.preset:not(.active):hover { background: #2196f3; }
+
+.preset.active {
+  background: #f60;
+}
+
+.preset:not(.active):hover {
+  background: #2196f3;
+}
+
 .volume {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 .volume label {
   margin-bottom: 5px;
   font-size: 0.9rem;
   color: #333;
 }
-.volume input { width: 90%; }
+
+.volume input {
+  width: 90%;
+}
+
 .vol-percentage {
   margin-top: 5px;
   font-size: 0.9rem;
-  color: #333; 
+  color: #333;
 }
+
 .footer {
   margin-top: 15px;
   font-size: 0.8rem;
   color: #333;
 }
+
 .footer a {
   color: #2196f3;
   text-decoration: none;
 }
+
 .footer a:hover {
   text-decoration: underline;
 }
+
+/* Adaptación para pantallas grandes como televisores */
+@media screen and (min-width: 1024px) {
+  .radio {
+    transform: scale(1.3);
+  }
+
+  .preset {
+    font-size: 1.1rem;
+    padding: 10px 0;
+  }
+
+  .volume label,
+  .vol-percentage,
+  .knob-label {
+    font-size: 1rem;
+  }
+
+  .display span {
+    font-size: 1.8rem;
+  }
+
+  .speaker {
+    width: 150px;
+    height: 150px;
+  }
+
+  .speaker::after {
+    width: 50px;
+    height: 50px;
+  }
+}
+
