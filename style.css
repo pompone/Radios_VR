@@ -1,4 +1,15 @@
 /* style.css */
+
+/* Reset y caja consistente */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Escala fluida: no gigante en desktop, legible en móvil */
+html {
+  font-size: clamp(14px, 1.1vw, 16px);
+}
+
 body {
   margin: 0;
   padding: 20px;
@@ -6,18 +17,17 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   background: #ccc;
   font-family: sans-serif;
-  box-sizing: border-box;
-  overflow: hidden;
+  overflow: auto; /* permitir scroll si hace falta */
 }
 
+/* Caja principal de la radio */
 .radio {
-  width: 90%;
-  max-width: 480px;
-  min-height: 600px;
-  padding: 20px;
+  width: min(420px, 92vw);
+  min-height: 520px;   /* antes 600px */
+  padding: 16px;       /* un toque menos */
   background: #ddd;
   border-radius: 10px;
   box-shadow: inset 0 0 10px #aaa, 6px 6px 15px rgba(0,0,0,0.3);
@@ -31,9 +41,10 @@ body {
   filter: brightness(70%) grayscale(30%);
 }
 
+/* Display */
 .display {
   width: 70%;
-  height: 32px;
+  height: 28px; /* antes 32px */
   background: #000;
   border: 2px solid #333;
   border-radius: 6px;
@@ -54,7 +65,7 @@ body {
   white-space: nowrap;
   color: #0f0;
   font-family: 'Digital-7', monospace;
-  font-size: 1.5rem;
+  font-size: 1.35rem; /* suavemente más chico */
   display: inline-block;
   left: 100%;
   animation: scrollText 8s linear infinite;
@@ -77,9 +88,10 @@ body {
   51%, 100% { opacity: 1; }
 }
 
+/* Parlante */
 .speaker {
-  width: 120px;
-  height: 120px;
+  width: 110px;   /* antes 120px */
+  height: 110px;
   border-radius: 50%;
   background: radial-gradient(circle at center, #333 0%, #111 70%);
   box-shadow:
@@ -97,8 +109,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
+  width: 36px;   /* antes 40px */
+  height: 36px;
   border-radius: 50%;
   background: radial-gradient(circle at center, #555 0%, #222 80%);
   box-shadow: inset -3px -3px 10px rgba(0,0,0,0.5);
@@ -114,6 +126,7 @@ body {
   100% { transform: scale(1); }
 }
 
+/* Controles */
 .controls {
   width: 100%;
   display: flex;
@@ -128,8 +141,8 @@ body {
 }
 
 .knob {
-  width: 40px;
-  height: 40px;
+  width: 34px;   /* antes 40px */
+  height: 34px;
   border-radius: 50%;
   background: linear-gradient(145deg,#eee,#ccc);
   border: 2px solid #999;
@@ -154,18 +167,19 @@ body {
 }
 
 .icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;   /* antes 20px */
+  height: 18px;
   stroke: currentColor;
   fill: none;
 }
 
 .knob-label {
   margin-top: 5px;
-  font-size: 0.75rem;
+  font-size: 0.8rem; /* antes 0.75rem */
   color: #333;
 }
 
+/* Presets */
 .presets {
   display: flex;
   justify-content: space-between;
@@ -177,7 +191,7 @@ body {
 .preset {
   flex: 1;
   margin: 3px;
-  padding: 8px 0;
+  padding: 7px 0;       /* antes 8-10px */
   background: #888;
   color: #fff;
   border: none;
@@ -186,7 +200,7 @@ body {
   cursor: pointer;
   transition: background 0.2s;
   font-size: 0.9rem;
-  min-width: 70px;
+  min-width: 64px;      /* antes 70px */
 }
 
 .preset.active {
@@ -197,6 +211,7 @@ body {
   background: #2196f3;
 }
 
+/* Volumen */
 .volume {
   width: 100%;
   display: flex;
@@ -220,6 +235,7 @@ body {
   color: #333;
 }
 
+/* Footer */
 .footer {
   margin-top: 15px;
   font-size: 0.8rem;
@@ -235,40 +251,24 @@ body {
   text-decoration: underline;
 }
 
-/* Adaptación para pantallas grandes como televisores */
-@media screen and (min-width: 1024px) {
-  html {
-    font-size: 18px;
-  }
-
-  .radio {
-    max-width: 600px;
-  }
-
-  .preset {
-    font-size: 1.1rem;
-    padding: 10px 0;
-  }
-
-  .volume label,
-  .vol-percentage,
-  .knob-label {
-    font-size: 1rem;
-  }
-
-  .display span {
-    font-size: 1.8rem;
-  }
-
-  .speaker {
-    width: 150px;
-    height: 150px;
-  }
-
-  .speaker::after {
-    width: 50px;
-    height: 50px;
-  }
+/* Accesibilidad: si el usuario prefiere menos animaciones */
+@media (prefers-reduced-motion: reduce) {
+  .display span { animation: none !important; }
+  .playing .speaker { animation: none !important; }
 }
+
+/* Variante “TV / pantallas MUY grandes” */
+@media screen and (min-width: 1600px) {
+  html { font-size: 18px; }
+  .radio { max-width: 560px; }
+  .speaker { width: 140px; height: 140px; }
+  .speaker::after { width: 46px; height: 46px; }
+  .display { height: 30px; }
+  .display span { font-size: 1.6rem; }
+  .preset { font-size: 1.05rem; padding: 9px 0; }
+  .knob { width: 36px; height: 36px; }
+  .icon { width: 20px; height: 20px; }
+}
+
 
 
