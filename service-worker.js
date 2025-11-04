@@ -1,38 +1,44 @@
-const CACHE_NAME = 'radios-vr-v1';
-const urlsToCache = [
-  '/Radios_VR/',
-  '/Radios_VR/index.html',
-  '/Radios_VR/style.css',
-  '/Radios_VR/script.js',
-  '/Radios_VR/manifest.json',
-  '/Radios_VR/icono.ico'
+// service-worker.js
+const CACHE_NAME = 'radios-vr-v7';
+const ASSETS = [
+  './',
+  './index.html',
+  './style.css',
+  './script.js',
+  './manifest.json',
+  './icono.ico',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS)));
+  self.skipWaiting();   // toma control más rápido
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response =>
-      response || fetch(event.request)
-    )
-  );
-});
-
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )
+      Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k))))
     )
   );
+  self.clients.claim(); // controla las pestañas abiertas sin recarga manual
 });
+
+// Estrategia cache-first con fallback a red y cache dinámico
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(event.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(event.request, copy));
+        return res;
+      }).catch(() => caches.match('./index.html'));
+    })
+  );
+});
+
