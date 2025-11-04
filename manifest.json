@@ -2,96 +2,59 @@
   "name": "Radios de Villa Regina",
   "short_name": "RadiosVR",
   "description": "Radio web con emisoras locales de Villa Regina",
-  "start_url": "./",
+  "id": "/Radios_VR/",
+  "start_url": "/Radios_VR/",
+  "scope": "/Radios_VR/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#cccccc",
   "theme_color": "#333333",
-  "scope": "./",
   "lang": "es",
   "dir": "ltr",
-  "id": "/",
-  "categories": ["entertainment", "music"],
-  "iarc_rating_id": "e10+",
+
   "icons": [
-    {
-      "src": "./icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "./icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "./icono.ico",
-      "sizes": "16x16 32x32 48x48",
-      "type": "image/x-icon"
-    }
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icono.ico",   "sizes": "16x16 32x32 48x48", "type": "image/x-icon" }
   ],
+
   "screenshots": [
-    {
-      "src": "./screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "./screenshot-narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
+    { "src": "./screenshot-wide.png",   "sizes": "1280x720",  "type": "image/png", "form_factor": "wide" },
+    { "src": "./screenshot-narrow.png", "sizes": "750x1334",  "type": "image/png", "form_factor": "narrow" }
   ],
-  "launch_handler": {
-    "client_mode": "auto"
-  },
-  "display_override": ["window-controls-overlay", "standalone"],
-  "edge_side_panel": {
-    "preferred_width": 300
-  },
+
+  "display_override": ["standalone"],
+
   "file_handlers": [
     {
-      "action": "/",
-      "accept": {
-        "audio/*": [".mp3", ".wav"]
-      }
+      "action": "/Radios_VR/",
+      "accept": { "audio/*": [".mp3", ".wav"] }
     }
   ],
+
   "handle_links": "preferred",
+
   "protocol_handlers": [
     {
       "protocol": "web+radio",
       "url": "https://radiosvr.com/?stream=%s"
     }
   ],
+
   "shortcuts": [
     {
       "name": "Inicio",
-      "url": "./",
+      "url": "/Radios_VR/",
       "description": "Ir a la página principal",
       "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
+
   "share_target": {
-    "action": "/",
+    "action": "/Radios_VR/",
     "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "background_sync": {
-    "tag": "sync-radio-content"
-  },
-  "periodic_sync": {
-    "tag": "sync-radio-updates",
-    "min_interval": 86400
-  },
-  "prefer_related_applications": false,
-  "related_applications": [],
-  "scope_extensions": []
+    "params": { "title": "title", "text": "text", "url": "url" }
+  }
 }
+
 
