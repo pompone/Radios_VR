@@ -253,11 +253,12 @@ player.addEventListener('pause', () => radio.classList.remove('playing'));
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('./service-worker.js?ver=7')
+      .register('./service-worker.js?ver=12')
       .then(reg => console.log('SW registrado:', reg.scope))
       .catch(err => console.error('SW error:', err));
   });
 }
+
 
 
 
