@@ -1,14 +1,10 @@
 /* style.css */
 
 /* Reset y caja consistente */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 /* Escala fluida: no gigante en desktop, legible en móvil */
-html {
-  font-size: clamp(14px, 1.1vw, 16px);
-}
+html { font-size: clamp(14px, 1.1vw, 16px); }
 
 body {
   margin: 0;
@@ -23,11 +19,11 @@ body {
   overflow: auto; /* permitir scroll si hace falta */
 }
 
-/* Caja principal de la radio */
+/* Caja principal de la radio (más baja) */
 .radio {
   width: min(420px, 92vw);
-  min-height: 520px;   /* antes 600px */
-  padding: 16px;       /* un toque menos */
+  min-height: 460px;   /* ↓ antes 520px */
+  padding: 16px;
   background: #ddd;
   border-radius: 10px;
   box-shadow: inset 0 0 10px #aaa, 6px 6px 15px rgba(0,0,0,0.3);
@@ -37,9 +33,7 @@ body {
   transition: filter 0.5s ease;
 }
 
-.radio.off {
-  filter: brightness(70%) grayscale(30%);
-}
+.radio.off { filter: brightness(70%) grayscale(30%); }
 
 /* Display */
 .display {
@@ -50,22 +44,20 @@ body {
   border-radius: 6px;
   overflow: hidden;
   position: relative;
-  margin-bottom: 15px;
+  margin-bottom: 12px; /* un poco menos */
   outline: 1px solid #0f0;
   will-change: transform;
   backface-visibility: hidden;
 }
 
-.display.off {
-  outline: 1px solid #222;
-}
+.display.off { outline: 1px solid #222; }
 
 .display span {
   position: absolute;
   white-space: nowrap;
   color: #0f0;
   font-family: 'Digital-7', monospace;
-  font-size: 1.35rem; /* suavemente más chico */
+  font-size: 1.35rem;
   display: inline-block;
   left: 100%;
   animation: scrollText 8s linear infinite;
@@ -78,20 +70,13 @@ body {
   transform: translateX(-50%);
 }
 
-@keyframes scrollText {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-100%); }
-}
+@keyframes scrollText { 0% { transform: translateX(0%);} 100% { transform: translateX(-100%);} }
+@keyframes flickerDisplay { 0%,50%{opacity:0;} 51%,100%{opacity:1;} }
 
-@keyframes flickerDisplay {
-  0%, 50% { opacity: 0; }
-  51%, 100% { opacity: 1; }
-}
-
-/* Parlante */
+/* Parlante (más chico) */
 .speaker {
-  width: 110px;   /* antes 120px */
-  height: 110px;
+  width: 96px;   /* ↓ antes 110px */
+  height: 96px;
   border-radius: 50%;
   background: radial-gradient(circle at center, #333 0%, #111 70%);
   box-shadow:
@@ -99,7 +84,7 @@ body {
     inset 5px 5px 15px rgba(255,255,255,0.1),
     0 0 0 6px #555;
   position: relative;
-  margin-bottom: 15px;
+  margin-bottom: 12px; /* menos espacio */
   transition: transform 0.1s;
 }
 
@@ -109,39 +94,28 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 36px;   /* antes 40px */
-  height: 36px;
+  width: 32px;  /* ↓ antes 36/40px */
+  height: 32px;
   border-radius: 50%;
   background: radial-gradient(circle at center, #555 0%, #222 80%);
   box-shadow: inset -3px -3px 10px rgba(0,0,0,0.5);
 }
 
-.playing .speaker {
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
+.playing .speaker { animation: pulse 1s infinite; }
+@keyframes pulse { 0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);} }
 
 /* Controles */
 .controls {
   width: 100%;
   display: flex;
   justify-content: space-around;
-  margin-bottom: 10px;
+  margin-bottom: 8px; /* ↓ */
 }
 
-.control {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+.control { display: flex; flex-direction: column; align-items: center; }
 
 .knob {
-  width: 34px;   /* antes 40px */
+  width: 34px;
   height: 34px;
   border-radius: 50%;
   background: linear-gradient(145deg,#eee,#ccc);
@@ -154,44 +128,25 @@ body {
   transition: background 0.2s, transform 0.1s ease;
 }
 
-.knob:hover {
-  transform: translateY(-2px);
-}
+.knob:hover { transform: translateY(-2px); }
+.knob.off { background: linear-gradient(145deg,#f66,#c33); }
+#knob-mute.off { background: linear-gradient(145deg,#6f6,#3c3) !important; }
 
-.knob.off {
-  background: linear-gradient(145deg,#f66,#c33);
-}
+.icon { width: 18px; height: 18px; stroke: currentColor; fill: none; }
+.knob-label { margin-top: 5px; font-size: 0.8rem; color: #333; }
 
-#knob-mute.off {
-  background: linear-gradient(145deg,#6f6,#3c3) !important;
-}
-
-.icon {
-  width: 18px;   /* antes 20px */
-  height: 18px;
-  stroke: currentColor;
-  fill: none;
-}
-
-.knob-label {
-  margin-top: 5px;
-  font-size: 0.8rem; /* antes 0.75rem */
-  color: #333;
-}
-
-/* Presets */
+/* Presets: 6 columnas iguales => no más “101.5” gigante */
 .presets {
-  display: flex;
-  justify-content: space-between;
   width: 100%;
   margin-bottom: 10px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* 6 botones por fila */
+  gap: 6px;
 }
 
 .preset {
-  flex: 1;
-  margin: 3px;
-  padding: 7px 0;       /* antes 8-10px */
+  margin: 0;             /* quitamos márgenes para que el grid controle el gap */
+  padding: 6px 0;        /* un poco más compacto */
   background: #888;
   color: #fff;
   border: none;
@@ -200,18 +155,13 @@ body {
   cursor: pointer;
   transition: background 0.2s;
   font-size: 0.9rem;
-  min-width: 64px;      /* antes 70px */
+  min-width: 0;          /* deja que el grid decida */
 }
 
-.preset.active {
-  background: #f60;
-}
+.preset.active { background: #f60; }
+.preset:not(.active):hover { background: #2196f3; }
 
-.preset:not(.active):hover {
-  background: #2196f3;
-}
-
-/* Volumen */
+/* Volumen (compacto) */
 .volume {
   width: 100%;
   display: flex;
@@ -220,55 +170,37 @@ body {
 }
 
 .volume label {
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   font-size: 0.9rem;
   color: #333;
 }
 
-.volume input {
-  width: 90%;
-}
-
-.vol-percentage {
-  margin-top: 5px;
-  font-size: 0.9rem;
-  color: #333;
-}
+.volume input { width: 90%; }
+.vol-percentage { margin-top: 4px; font-size: 0.9rem; color: #333; }
 
 /* Footer */
-.footer {
-  margin-top: 15px;
-  font-size: 0.8rem;
-  color: #333;
-}
+.footer { margin-top: 12px; font-size: 0.8rem; color: #333; }
+.footer a { color: #2196f3; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
 
-.footer a {
-  color: #2196f3;
-  text-decoration: none;
-}
-
-.footer a:hover {
-  text-decoration: underline;
-}
-
-/* Accesibilidad: si el usuario prefiere menos animaciones */
+/* Accesibilidad: menos animaciones si el usuario lo prefiere */
 @media (prefers-reduced-motion: reduce) {
-  .display span { animation: none !important; }
-  .playing .speaker { animation: none !important; }
+  .display span, .playing .speaker { animation: none !important; }
 }
 
 /* Variante “TV / pantallas MUY grandes” */
 @media screen and (min-width: 1600px) {
   html { font-size: 18px; }
   .radio { max-width: 560px; }
-  .speaker { width: 140px; height: 140px; }
-  .speaker::after { width: 46px; height: 46px; }
+  .speaker { width: 130px; height: 130px; }
+  .speaker::after { width: 44px; height: 44px; }
   .display { height: 30px; }
   .display span { font-size: 1.6rem; }
-  .preset { font-size: 1.05rem; padding: 9px 0; }
+  .preset { font-size: 1.0rem; padding: 8px 0; }
   .knob { width: 36px; height: 36px; }
   .icon { width: 20px; height: 20px; }
 }
+
 
 
 
