@@ -16,17 +16,122 @@ let isOn = false;
 let isMuted = false;
 let currentStation = null;
 
-// Utilidades
-function setDisplay(text, { blink = false, off = false } = {}) {
+// ====== Marquee continuo (JS) ======
+// Creamos dos spans para un loop sin cortes: [A][gap][B] → se reciclan
+const marqueeA = document.createElement('span');
+const marqueeB = document.createElement('span');
+[marqueeA, marqueeB].forEach(s => {
+  s.style.position = 'absolute';
+  s.style.whiteSpace = 'nowrap';
+  s.style.left = '0';
+  s.style.top = '0';
+  // anulamos cualquier animación CSS previa que tengas en .display span
+  s.style.animation = 'none';
+  s.style.textShadow = '0 0 8px #0f0';
+  s.style.color = '#0f0';
+});
+display.appendChild(marqueeA);
+display.appendChild(marqueeB);
+
+let marquee = {
+  running: false,
+  rafId: null,
+  lastTs: null,
+  x: 0,
+  speed: 60,   // px/s
+  gap: 40,     // px entre A y B
+  width: 0
+};
+
+function hideMarquee() {
+  if (marquee.rafId) cancelAnimationFrame(marquee.rafId);
+  marquee.running = false;
+  marquee.lastTs = null;
+  marqueeA.style.display = 'none';
+  marqueeB.style.display = 'none';
+  // reactivamos el span original
+  displayText.style.display = 'inline-block';
+}
+
+function startMarquee(text) {
+  // si el display está en OFF, no corremos marquee
+  if (display.classList.contains('off')) return;
+
+  // usamos dos copias del texto
+  marqueeA.textContent = text;
+  marqueeB.textContent = text;
+
+  // medimos al próximo frame (con el span ya en el DOM)
+  marqueeA.style.display = 'inline-block';
+  marqueeB.style.display = 'inline-block';
+
+  // ocultamos el span "estático" original
+  displayText.style.display = 'none';
+
+  requestAnimationFrame(() => {
+    const containerW = display.clientWidth;
+    const textW = marqueeA.offsetWidth; // ancho del texto
+    marquee.width = textW;
+
+    // Si el texto entra en el display, no hace falta desplazar: mostramos centrado con el span original
+    if (textW <= containerW) {
+      hideMarquee();
+      displayText.textContent = text;
+      displayText.classList.remove('blink');
+      display.classList.remove('off');
+      return;
+    }
+
+    marquee.x = 0; // arranca pegado a la derecha del contenedor (ver transform abajo)
+    marquee.lastTs = null;
+
+    function step(ts) {
+      if (!marquee.running) return;
+      if (!marquee.lastTs) marquee.lastTs = ts;
+      const dt = (ts - marquee.lastTs) / 1000;
+      marquee.lastTs = ts;
+
+      marquee.x -= marquee.speed * dt;
+      const total = marquee.width + marquee.gap;
+
+      // reciclamos cuando A sale completamente por la izquierda
+      if (marquee.x <= -total) {
+        marquee.x += total;
+      }
+
+      // Posicionamos A y B
+      // A arranca en x; B lo sigue detrás a distancia total
+      marqueeA.style.transform = `translateX(${marquee.x}px)`;
+      marqueeB.style.transform = `translateX(${marquee.x + total}px)`;
+
+      marquee.rafId = requestAnimationFrame(step);
+    }
+
+    marquee.running = true;
+    marquee.rafId = requestAnimationFrame(step);
+  });
+}
+
+function setDisplay(text, { blink = false, off = false, marquee: useMarquee = false } = {}) {
+  // Cuando no queremos marquee, nos aseguramos de apagarlo
+  if (!useMarquee) hideMarquee();
+
   displayText.textContent = text;
   displayText.classList.toggle('blink', blink);
   display.classList.toggle('off', off);
+
+  if (useMarquee) {
+    // Mostramos un instante el contenido con el span original (por si tarda la medición),
+    // y arrancamos el marquee JS.
+    displayText.style.display = 'inline-block';
+    startMarquee(text);
+  }
 }
 
 function setMuted(state) {
   isMuted = state;
   player.muted = state;
-  knobMute.classList.toggle('off', state); // en tu CSS, #knob-mute.off muestra el "mute" activo
+  knobMute.classList.toggle('off', state); // tu CSS pinta el botón
 }
 
 function syncVolume(v) {
@@ -35,13 +140,13 @@ function syncVolume(v) {
   volPercentage.textContent = Math.round(vol * 100) + '%';
 
   if (vol <= 0.0001) {
-    setMuted(true);     // Volumen 0 => Mute encendido visual y funcional
+    setMuted(true);     // Volumen 0 => Mute encendido
   } else if (isMuted) {
-    setMuted(false);    // Si subís volumen, desmutea
+    setMuted(false);    // Subir volumen => desmutea
   }
 }
 
-// ===== Estado inicial: OFF (verde) =====
+// ===== Estado inicial: OFF (verde titilando suave ya lo maneja tu CSS para .off) =====
 radio.classList.add('off');
 display.classList.add('off');
 setDisplay('Off', { blink: false, off: true });
@@ -55,24 +160,19 @@ knobPower.addEventListener('click', () => {
     radio.classList.remove('off');
     display.classList.remove('off');
     knobPower.classList.remove('off');
-    setDisplay('Selecciona una emisora', { blink: true, off: false });
+    setDisplay('Seleccionar radio', { blink: true, off: false, marquee: false });
   } else {
     radio.classList.add('off');
     display.classList.add('off');
     knobPower.classList.add('off');
 
-    // Limpiar reproducción
     try { player.pause(); } catch {}
     player.src = '';
     radio.classList.remove('playing');
     presets.forEach(p => p.classList.remove('active'));
     currentStation = null;
-
-    // Reset de mute para el próximo encendido
     setMuted(false);
-
-    // Volver a OFF verde
-    setDisplay('Off', { blink: false, off: true });
+    setDisplay('Off', { blink: false, off: true, marquee: false });
   }
 });
 
@@ -91,20 +191,18 @@ presets.forEach(preset => {
     const src = preset.dataset.src || (preset.dataset.sources ? preset.dataset.sources.split('|')[0].trim() : null);
     if (!src) return;
 
-    // Si ya está sonando esta misma y no está pausado, pausar
     if (currentStation === src && !player.paused) {
       player.pause();
       radio.classList.remove('playing');
       preset.classList.remove('active');
-      setDisplay('En pausa', { blink: false, off: false });
+      setDisplay('En pausa', { blink: false, off: false, marquee: false });
       currentStation = null;
       return;
     }
 
-    // Estado "Conectando…" mientras intenta reproducir
     presets.forEach(p => p.classList.remove('active'));
     preset.classList.add('active');
-    setDisplay('Conectando…', { blink: true, off: false });
+    setDisplay('Conectando…', { blink: true, off: false, marquee: false });
 
     player.src = src;
     player.volume = parseFloat(volumeSlider.value);
@@ -112,13 +210,14 @@ presets.forEach(preset => {
     player.play()
       .then(() => {
         radio.classList.add('playing');
-        setDisplay(freq, { blink: false, off: false });
+        // Al sonar, activamos marquee continuo para el nombre de la emisora
+        setDisplay(freq, { blink: false, off: false, marquee: true });
         currentStation = src;
       })
       .catch(err => {
         console.error('Error al reproducir:', err);
         radio.classList.remove('playing');
-        setDisplay('Error de conexión', { blink: false, off: false });
+        setDisplay('Error de conexión', { blink: false, off: false, marquee: false });
         preset.classList.remove('active');
         currentStation = null;
       });
@@ -142,20 +241,22 @@ radio.addEventListener('wheel', (e) => {
 // Eventos de audio
 player.addEventListener('error', () => {
   radio.classList.remove('playing');
-  setDisplay('Error al cargar', { blink: false, off: false });
+  setDisplay('Error al cargar', { blink: false, off: false, marquee: false });
 });
 player.addEventListener('playing', () => radio.classList.add('playing'));
 player.addEventListener('pause', () => radio.classList.remove('playing'));
 
-
+// --- PWA: registrar service worker ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('./sw.js?ver=3')  // ?ver=3 para evitar cache viejo del SW
+      .register('./sw.js?ver=5')  // subí el número si cambiás sw.js
       .then(reg => console.log('SW registrado:', reg.scope))
       .catch(err => console.error('SW error:', err));
   });
 }
+
+
 
 
 
