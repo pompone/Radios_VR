@@ -1,63 +1,67 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <link rel="icon" href="icono.ico" type="image/x-icon">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Radios de Villa Regina</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#333333">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<link rel="icon" href="icono.ico" type="image/x-icon">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radios de Villa Regina</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#333333">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="radio off" id="radio">
     <div class="display off" id="display">
       <span id="display-text">Off</span>
     </div>
+    
     <div class="speaker"></div>
+    
     <div class="controls">
       <div class="control">
         <div class="knob" id="knob-mute" title="Mute">
           <svg class="icon" viewBox="0 0 24 24">
-            <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" fill="none"/>
-            <line x1="18" y1="8" x2="14" y2="12" stroke="currentColor" stroke-width="2"/>
-            <line x1="18" y1="12" x2="14" y2="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <line x1="18" y1="8" x2="22" y2="12"/>
+            <line x1="22" y1="8" x2="18" y2="12"/>
           </svg>
         </div>
         <div class="knob-label">Mute</div>
       </div>
+      
       <div class="control">
         <div class="knob off" id="knob-power" title="Power">
           <svg class="icon" viewBox="0 0 24 24">
-            <circle cx="12" cy="13" r="8"/>
-            <line x1="12" y1="5" x2="12" y2="1"/>
+            <path d="M12 2v10"/>
+            <path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>
           </svg>
         </div>
         <div class="knob-label">Power</div>
       </div>
     </div>
+    
     <div class="presets">
-      <button class="preset"
-        data-freq="Radio Noventa 90.1 MHz"
-        data-sources="
-          https://cast.tunzilla.com/http://www.radionoventa.com.ar:8000/Noventa_en_vivo.ogg|
-          https://cast.tunzilla.com/http://www.radionoventa.com.ar:8000/Noventa_en_vivo.mp3">90.1</button>
-
-
+      <button class="preset" data-freq="Radio Noventa 90.1 MHz" data-src="https://cast.tunzilla.com/http://www.radionoventa.com.ar:8000/Noventa_en_vivo.mp3">90.1</button>
       <button class="preset" data-freq="LU16 92.7 MHz" data-src="https://radio01.ferozo.com/proxy/ra01001162?mp=/stream">92.7</button>
       <button class="preset" data-freq="Radio del Sol 93.7 MHz" data-src="https://stream.hego.com.ar/listen/radio_del_sol/radio.mp3">93.7</button>
       <button class="preset" data-freq="Slogan 94.7 MHz" data-src="https://stream.hego.com.ar/listen/radio_slogan/slogan.mp3">94.7</button>
       <button class="preset" data-freq="Patagonia 95.9 MHz" data-src="https://streaming1.locucionar.com/proxy/patagoniafm?mp=/stream">95.9</button>
       <button class="preset" data-freq="Eclipse 101.5 MHz" data-src="http://01.solumedia.com.ar:8746/stream">101.5</button>
     </div>
+    
     <div class="volume">
       <label for="volume">Volumen</label>
-      <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-      <div class="vol-percentage" id="vol-percentage">100%</div>
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="0.7">
+      <div class="vol-percentage" id="vol-percentage">70%</div>
     </div>
   </div>
+  
   <audio id="player"></audio>
-  <div class="footer">Desarrollado por <a href="https://pompone.github.io/CV_Pompone.github.io" target="_blank">Alejandro M. Pompone</a></div>
+  
+  <div class="footer">
+    Desarrollado por <a href="https://pompone.github.io/CV_Pompone.github.io" target="_blank">Alejandro M. Pompone</a>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
