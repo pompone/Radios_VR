@@ -89,6 +89,26 @@ volumeSlider.addEventListener('input', (e) => {
   volPercentage.textContent = Math.round(vol * 100) + '%';
 });
 
+// Volume control con ruedita del mouse
+volumeSlider.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  
+  let currentVol = parseFloat(volumeSlider.value);
+  const step = 0.05; // Incremento/decremento
+  
+  if (e.deltaY < 0) {
+    // Scroll hacia arriba = subir volumen
+    currentVol = Math.min(1, currentVol + step);
+  } else {
+    // Scroll hacia abajo = bajar volumen
+    currentVol = Math.max(0, currentVol - step);
+  }
+  
+  volumeSlider.value = currentVol;
+  player.volume = currentVol;
+  volPercentage.textContent = Math.round(currentVol * 100) + '%';
+});
+
 // Handle audio errors
 player.addEventListener('error', () => {
   displayText.textContent = 'Error al cargar';
@@ -102,5 +122,6 @@ player.addEventListener('playing', () => {
 player.addEventListener('pause', () => {
   radio.classList.remove('playing');
 });
+
 
 
