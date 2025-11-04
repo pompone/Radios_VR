@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = 'radios-vr-v7';
+const CACHE_NAME = 'radios-vr-v12';
 const ASSETS = [
   './',
   './index.html',
@@ -41,4 +41,5 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
 
