@@ -1,4 +1,4 @@
-// --- Radio de Villa Regina - script.js (Corregido) ---
+// --- Radio de Villa Regina - script.js ---
 
 // Elementos
 const radio = document.getElementById('radio');
@@ -27,7 +27,7 @@ const marqB = document.createElement('span');
   s.style.color = '#0f0';
   s.style.textShadow = '0 0 8px #0f0';
   s.style.display = 'none';
-  // Importante: reseteamos cualquier centrado heredado para el modo marquee
+  // Importante: reseteamos cualquier centrado heredado
   s.style.left = '0'; 
   s.style.transform = 'none';
 });
@@ -40,7 +40,7 @@ let marquee = {
   lastTs: null,
   x: 0,
   speed: 80,      // Pixels por segundo
-  gap: 50,        // Espacio entre repeticiones
+  gap: 60,        // Espacio entre repeticiones (un poco más aireado)
   width: 0
 };
 
@@ -72,19 +72,11 @@ function startMarquee(text) {
     const textW = marqA.offsetWidth;
     marquee.width = textW;
 
-    // CASO 1: El texto cabe perfectamente -> NO mover
-    if (textW <= containerW) {
-      hideMarquee();
-      displayText.textContent = text;
-      // Aseguramos que esté centrado y quieto
-      displayText.style.left = '50%';
-      displayText.style.transform = 'translateX(-50%)';
-      displayText.classList.remove('blink'); 
-      display.classList.remove('off');
-      return;
-    }
-
-    // CASO 2: El texto es largo -> Activar marquesina infinita derecha a izquierda
+    // --- MODIFICACIÓN: Eliminado el chequeo de ancho ---
+    // Antes verificábamos si el texto cabía para frenarlo. 
+    // Ahora forzamos el movimiento siempre para dar efecto de radio activa.
+    
+    // CONFIGURACIÓN DE MOVIMIENTO (Derecha a Izquierda)
     // Iniciamos justo fuera de la derecha
     marquee.x = containerW + 20; 
     marquee.lastTs = null;
@@ -98,8 +90,8 @@ function startMarquee(text) {
       // Mover hacia la izquierda
       marquee.x -= marquee.speed * dt;
 
-      // Si el primer bloque (A) más el espacio ha salido completamente...
-      // lo movemos al final de la cola para hacer el loop infinito.
+      // Bucle infinito: 
+      // Si el primer bloque (A) sale por la izquierda, lo reposicionamos al final.
       if (marquee.x < -(textW + marquee.gap)) {
         marquee.x += (textW + marquee.gap);
       }
@@ -116,7 +108,7 @@ function startMarquee(text) {
 }
 
 function setDisplay(text, { blink = false, off = false, marquee: useMarquee = false } = {}) {
-  // Apagamos el marquee siempre al cambiar texto, lo reactivamos luego si hace falta
+  // Apagamos el marquee anterior siempre al cambiar texto
   hideMarquee();
 
   displayText.textContent = text;
@@ -132,7 +124,7 @@ function setDisplay(text, { blink = false, off = false, marquee: useMarquee = fa
     displayText.classList.remove('blink');
   }
 
-  // Si requiere marquesina, iniciamos la lógica
+  // Si requiere marquesina (es una emisora sonando), iniciamos la animación siempre
   if (useMarquee) {
     startMarquee(text);
   }
@@ -223,7 +215,7 @@ presets.forEach(preset => {
     player.play()
       .then(() => {
         radio.classList.add('playing'); // Activa animación parlante CSS
-        // Al reproducir, mostramos la frecuencia con marquee (si es larga)
+        // Al reproducir, mostramos la frecuencia CON marquee siempre
         setDisplay(freq, { blink: false, off: false, marquee: true });
         currentStation = src;
       })
