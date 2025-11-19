@@ -2,9 +2,9 @@
   "name": "Radios de Villa Regina",
   "short_name": "RadiosVR",
   "description": "Radio web con emisoras locales de Villa Regina",
-  "id": "/Radios_VR/",
-  "start_url": "/Radios_VR/",
-  "scope": "/Radios_VR/",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#cccccc",
@@ -27,31 +27,24 @@
 
   "file_handlers": [
     {
-      "action": "/Radios_VR/",
+      "action": "./index.html",
       "accept": { "audio/*": [".mp3", ".wav"] }
     }
   ],
 
   "handle_links": "preferred",
 
-  "protocol_handlers": [
-    {
-      "protocol": "web+radio",
-      "url": "https://radiosvr.com/?stream=%s"
-    }
-  ],
-
   "shortcuts": [
     {
       "name": "Inicio",
-      "url": "/Radios_VR/",
+      "url": "./index.html",
       "description": "Ir a la página principal",
       "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
 
   "share_target": {
-    "action": "/Radios_VR/",
+    "action": "./index.html",
     "method": "GET",
     "params": { "title": "title", "text": "text", "url": "url" }
   }
