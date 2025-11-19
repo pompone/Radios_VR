@@ -1,4 +1,4 @@
-// --- Radio de Villa Regina - script.js ---
+// --- script.js ---
 
 // Elementos
 const radio = document.getElementById('radio');
@@ -27,7 +27,6 @@ const marqB = document.createElement('span');
   s.style.color = '#0f0';
   s.style.textShadow = '0 0 8px #0f0';
   s.style.display = 'none';
-  // Importante: reseteamos cualquier centrado heredado
   s.style.left = '0'; 
   s.style.transform = 'none';
 });
@@ -39,8 +38,8 @@ let marquee = {
   rafId: null,
   lastTs: null,
   x: 0,
-  speed: 80,      // Pixels por segundo
-  gap: 60,        // Espacio entre repeticiones (un poco más aireado)
+  speed: 40,      // <--- VELOCIDAD AJUSTADA (Más lenta)
+  gap: 60,        // Espacio entre repeticiones
   width: 0
 };
 
@@ -50,33 +49,23 @@ function hideMarquee() {
   marquee.lastTs = null;
   marqA.style.display = 'none';
   marqB.style.display = 'none';
-  // Volvemos a mostrar el texto original estático
   displayText.style.display = 'inline-block';
 }
 
 function startMarquee(text) {
   if (display.classList.contains('off')) return;
 
-  // Configuramos el texto en los elementos móviles
   marqA.textContent = text;
   marqB.textContent = text;
   marqA.style.display = 'inline-block';
   marqB.style.display = 'inline-block';
-  
-  // Ocultamos el texto estático original
   displayText.style.display = 'none';
 
-  // Medir en el siguiente frame para asegurar renderizado
   requestAnimationFrame(() => {
     const containerW = display.clientWidth;
     const textW = marqA.offsetWidth;
     marquee.width = textW;
-
-    // --- MODIFICACIÓN: Eliminado el chequeo de ancho ---
-    // Antes verificábamos si el texto cabía para frenarlo. 
-    // Ahora forzamos el movimiento siempre para dar efecto de radio activa.
     
-    // CONFIGURACIÓN DE MOVIMIENTO (Derecha a Izquierda)
     // Iniciamos justo fuera de la derecha
     marquee.x = containerW + 20; 
     marquee.lastTs = null;
@@ -90,8 +79,7 @@ function startMarquee(text) {
       // Mover hacia la izquierda
       marquee.x -= marquee.speed * dt;
 
-      // Bucle infinito: 
-      // Si el primer bloque (A) sale por la izquierda, lo reposicionamos al final.
+      // Bucle infinito
       if (marquee.x < -(textW + marquee.gap)) {
         marquee.x += (textW + marquee.gap);
       }
@@ -108,23 +96,21 @@ function startMarquee(text) {
 }
 
 function setDisplay(text, { blink = false, off = false, marquee: useMarquee = false } = {}) {
-  // Apagamos el marquee anterior siempre al cambiar texto
-  hideMarquee();
+  hideMarquee(); // Detener anterior
 
   displayText.textContent = text;
   display.classList.toggle('off', off);
 
-  // Control de parpadeo (Blink)
+  // Control de parpadeo
   if (blink) {
     displayText.classList.add('blink');
-    // Quitamos transformaciones manuales para que la clase CSS .blink mande (centrado)
     displayText.style.transform = '';
     displayText.style.left = '';
   } else {
     displayText.classList.remove('blink');
   }
 
-  // Si requiere marquesina (es una emisora sonando), iniciamos la animación siempre
+  // Si requiere marquesina, la forzamos (siempre corre)
   if (useMarquee) {
     startMarquee(text);
   }
@@ -159,7 +145,6 @@ knobPower.addEventListener('click', () => {
     radio.classList.remove('off');
     display.classList.remove('off');
     knobPower.classList.remove('off');
-    // Texto centrado y parpadeando
     setDisplay('Seleccione una emisora', { blink: true, off: false, marquee: false });
   } else {
     radio.classList.add('off');
@@ -192,7 +177,6 @@ presets.forEach(preset => {
     const src = preset.dataset.src;
     if (!src) return;
 
-    // Si ya está sonando esta misma, pausamos
     if (currentStation === src && !player.paused) {
       player.pause();
       radio.classList.remove('playing');
@@ -202,11 +186,10 @@ presets.forEach(preset => {
       return;
     }
 
-    // Cambiar emisora
     presets.forEach(p => p.classList.remove('active'));
     preset.classList.add('active');
     
-    // Mostrar "Conectando..." centrado y parpadeando (sin moverse)
+    // Conectando: Parpadea pero NO se mueve (marquee: false)
     setDisplay('Conectando...', { blink: true, off: false, marquee: false });
 
     player.src = src;
@@ -214,13 +197,13 @@ presets.forEach(preset => {
 
     player.play()
       .then(() => {
-        radio.classList.add('playing'); // Activa animación parlante CSS
-        // Al reproducir, mostramos la frecuencia CON marquee siempre
+        radio.classList.add('playing');
+        // Reproduciendo: NO parpadea y SÍ se mueve (marquee: true)
         setDisplay(freq, { blink: false, off: false, marquee: true });
         currentStation = src;
       })
       .catch(err => {
-        console.error('Error al reproducir:', err);
+        console.error('Error:', err);
         radio.classList.remove('playing');
         setDisplay('Error conexión', { blink: false, off: false, marquee: false });
         preset.classList.remove('active');
@@ -243,7 +226,7 @@ radio.addEventListener('wheel', (e) => {
   syncVolume(v);
 }, { passive: false });
 
-// Eventos Audio (backup visual)
+// Eventos Audio
 player.addEventListener('playing', () => radio.classList.add('playing'));
 player.addEventListener('pause', () => radio.classList.remove('playing'));
 player.addEventListener('error', () => {
@@ -251,16 +234,15 @@ player.addEventListener('error', () => {
   setDisplay('Error', { blink: false, off: false, marquee: false });
 });
 
-// PWA Service Worker
+// Registro SW
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('./service-worker.js?ver=13')
-      .then(reg => console.log('SW registrado:', reg.scope))
-      .catch(err => console.error('SW error:', err));
+      .register('./service-worker.js?ver=15')
+      .then(reg => console.log('SW OK:', reg.scope))
+      .catch(err => console.error('SW Error:', err));
   });
 }
-
 
 
 
