@@ -17,7 +17,6 @@ let isMuted = false;
 let currentStation = null;
 
 // ===== Marquee JS (Texto desplazable infinito) =====
-// Creamos 2 spans dinámicos para el efecto loop
 const marqA = document.createElement('span');
 const marqB = document.createElement('span');
 [marqA, marqB].forEach(s => {
@@ -30,7 +29,6 @@ const marqB = document.createElement('span');
   s.style.display = 'none';
   s.style.left = '0'; 
   s.style.transform = 'none';
-  // Anulamos animación CSS heredada
   s.style.animation = 'none';
 });
 display.appendChild(marqA);
@@ -41,7 +39,7 @@ let marquee = {
   rafId: null,
   lastTs: null,
   x: 0,
-  speed: 45,      // <--- VELOCIDAD REDUCIDA (Antes 70 u 80)
+  speed: 45,      // Velocidad
   gap: 60,        // Espacio entre repeticiones
   width: 0
 };
@@ -69,7 +67,6 @@ function startMarquee(text) {
     const textW = marqA.offsetWidth;
     marquee.width = textW;
     
-    // Iniciamos justo fuera de la derecha
     marquee.x = containerW + 20; 
     marquee.lastTs = null;
 
@@ -79,10 +76,8 @@ function startMarquee(text) {
       const dt = (ts - marquee.lastTs) / 1000;
       marquee.lastTs = ts;
 
-      // Mover hacia la izquierda
       marquee.x -= marquee.speed * dt;
 
-      // Bucle infinito: cuando A sale, vuelve al final
       if (marquee.x < -(textW + marquee.gap)) {
         marquee.x += (textW + marquee.gap);
       }
@@ -99,22 +94,19 @@ function startMarquee(text) {
 }
 
 function setDisplay(text, { blink = false, off = false, marquee: useMarquee = false } = {}) {
-  hideMarquee(); // Limpiar animación previa
+  hideMarquee();
 
   displayText.textContent = text;
   display.classList.toggle('off', off);
 
-  // Control de parpadeo via CSS
   if (blink) {
     displayText.classList.add('blink');
-    // Limpiar estilos inline para que mande el CSS
     displayText.style.transform = '';
     displayText.style.left = '';
   } else {
     displayText.classList.remove('blink');
   }
 
-  // Activar marquesina (siempre corre si useMarquee es true)
   if (useMarquee) {
     startMarquee(text);
   }
@@ -153,8 +145,11 @@ knobPower.addEventListener('click', () => {
     radio.classList.add('off');
     display.classList.add('off');
     knobPower.classList.add('off');
+    
+    // Limpiamos source
     try { player.pause(); } catch {}
-    player.src = '';
+    player.src = ''; 
+    
     radio.classList.remove('playing');
     presets.forEach(p => p.classList.remove('active'));
     currentStation = null;
@@ -190,7 +185,6 @@ presets.forEach(preset => {
     presets.forEach(p => p.classList.remove('active'));
     preset.classList.add('active');
     
-    // Conectando... (Parpadea, NO se mueve)
     setDisplay('Conectando...', { blink: true, off: false, marquee: false });
 
     player.src = src;
@@ -199,7 +193,6 @@ presets.forEach(preset => {
     player.play()
       .then(() => {
         radio.classList.add('playing');
-        // Sonando... (NO parpadea, SÍ se mueve)
         setDisplay(freq, { blink: false, off: false, marquee: true });
         currentStation = src;
       })
@@ -227,12 +220,16 @@ radio.addEventListener('wheel', (e) => {
 
 player.addEventListener('playing', () => radio.classList.add('playing'));
 player.addEventListener('pause', () => radio.classList.remove('playing'));
+
+// --- CORRECCIÓN AQUÍ: Ignoramos error si está apagada ---
 player.addEventListener('error', () => {
+  if (!isOn) return; // Si la apagamos nosotros, no es un error para mostrar
+  
   radio.classList.remove('playing');
   setDisplay('Error', { blink: false, off: false, marquee: false });
 });
 
-// SW Register (con ruta relativa)
+// SW Register
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
@@ -241,11 +238,3 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('SW Falló:', err));
   });
 }
-
-
-
-
-
-
-
-
