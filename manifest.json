@@ -11,29 +11,23 @@
   "theme_color": "#333333",
   "lang": "es",
   "dir": "ltr",
-
   "icons": [
     { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "./icono.ico",   "sizes": "16x16 32x32 48x48", "type": "image/x-icon" }
   ],
-
   "screenshots": [
     { "src": "./screenshot-wide.png",   "sizes": "1280x720",  "type": "image/png", "form_factor": "wide" },
     { "src": "./screenshot-narrow.png", "sizes": "750x1334",  "type": "image/png", "form_factor": "narrow" }
   ],
-
   "display_override": ["standalone"],
-
   "file_handlers": [
     {
       "action": "./index.html",
       "accept": { "audio/*": [".mp3", ".wav"] }
     }
   ],
-
   "handle_links": "preferred",
-
   "shortcuts": [
     {
       "name": "Inicio",
@@ -42,7 +36,6 @@
       "icons": [{ "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
-
   "share_target": {
     "action": "./index.html",
     "method": "GET",
