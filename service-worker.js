@@ -1,5 +1,5 @@
-// service-worker.js
-const CACHE_NAME = 'radios-vr-v15'; // Cambié la versión para forzar actualización
+// --- service-worker.js ---
+const CACHE_NAME = 'radios-vr-v16'; // Subimos versión para limpiar caché vieja
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './icono.ico',
   './icon-192.png',
   './icon-512.png'
+  // Agrega aquí screenshot-wide.png o fonts si las tienes
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,26 +27,31 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // 1. IMPORTANTE: Ignorar peticiones que no sean GET o que sean streams de audio
-  if (event.request.method !== 'GET') return;
-  if (event.request.url.includes('.mp3') || event.request.destination === 'audio') {
-    return; // Dejar que pase directo a la red sin caché
+  // 1. IMPORTANTE: Si es audio, NO cachear. Pasar directo a red.
+  if (event.request.url.includes('.mp3') || 
+      event.request.url.includes('stream') || 
+      event.request.destination === 'audio') {
+    return; 
   }
+
+  // 2. Si no es GET, no cachear
+  if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
 
       return fetch(event.request).then((res) => {
-        // Verificamos que sea una respuesta válida antes de cachear
+        // Chequear respuesta válida
         if (!res || res.status !== 200 || res.type !== 'basic') {
           return res;
         }
+        // Clonar y guardar
         const copy = res.clone();
         caches.open(CACHE_NAME).then((c) => c.put(event.request, copy));
         return res;
       }).catch(() => {
-        // Fallback offline si falla la red (opcional)
+        // Si falla red y no hay caché, devolver index (modo offline)
         return caches.match('./index.html');
       });
     })
