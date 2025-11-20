@@ -1,6 +1,6 @@
 // --- script.js ---
 
-// Elementos
+// Elementos DOM
 const radio = document.getElementById('radio');
 const display = document.getElementById('display');
 const displayText = document.getElementById('display-text');
@@ -11,12 +11,13 @@ const volumeSlider = document.getElementById('volume');
 const volPercentage = document.getElementById('vol-percentage');
 const player = document.getElementById('player');
 
-// Estado
+// Variables Estado
 let isOn = false;
 let isMuted = false;
 let currentStation = null;
 
-// ===== Marquee JS (Texto desplazable) =====
+// ===== Marquee JS (Texto desplazable infinito) =====
+// Creamos 2 spans dinámicos para el efecto loop
 const marqA = document.createElement('span');
 const marqB = document.createElement('span');
 [marqA, marqB].forEach(s => {
@@ -29,6 +30,8 @@ const marqB = document.createElement('span');
   s.style.display = 'none';
   s.style.left = '0'; 
   s.style.transform = 'none';
+  // Anulamos animación CSS heredada
+  s.style.animation = 'none';
 });
 display.appendChild(marqA);
 display.appendChild(marqB);
@@ -38,7 +41,7 @@ let marquee = {
   rafId: null,
   lastTs: null,
   x: 0,
-  speed: 40,      // <--- VELOCIDAD AJUSTADA (Más lenta)
+  speed: 45,      // <--- VELOCIDAD REDUCIDA (Antes 70 u 80)
   gap: 60,        // Espacio entre repeticiones
   width: 0
 };
@@ -79,7 +82,7 @@ function startMarquee(text) {
       // Mover hacia la izquierda
       marquee.x -= marquee.speed * dt;
 
-      // Bucle infinito
+      // Bucle infinito: cuando A sale, vuelve al final
       if (marquee.x < -(textW + marquee.gap)) {
         marquee.x += (textW + marquee.gap);
       }
@@ -96,27 +99,28 @@ function startMarquee(text) {
 }
 
 function setDisplay(text, { blink = false, off = false, marquee: useMarquee = false } = {}) {
-  hideMarquee(); // Detener anterior
+  hideMarquee(); // Limpiar animación previa
 
   displayText.textContent = text;
   display.classList.toggle('off', off);
 
-  // Control de parpadeo
+  // Control de parpadeo via CSS
   if (blink) {
     displayText.classList.add('blink');
+    // Limpiar estilos inline para que mande el CSS
     displayText.style.transform = '';
     displayText.style.left = '';
   } else {
     displayText.classList.remove('blink');
   }
 
-  // Si requiere marquesina, la forzamos (siempre corre)
+  // Activar marquesina (siempre corre si useMarquee es true)
   if (useMarquee) {
     startMarquee(text);
   }
 }
 
-// ===== Volumen / Mute =====
+// ===== Audio / Volumen =====
 function setMuted(state) {
   isMuted = state;
   player.muted = state;
@@ -131,16 +135,15 @@ function syncVolume(v) {
   else if (isMuted) setMuted(false);
 }
 
-// ===== Inicialización =====
+// ===== Init =====
 radio.classList.add('off');
 display.classList.add('off');
 setDisplay('Off', { blink: false, off: true, marquee: false });
 syncVolume(volumeSlider.value);
 
-// Power on/off
+// Power
 knobPower.addEventListener('click', () => {
   isOn = !isOn;
-
   if (isOn) {
     radio.classList.remove('off');
     display.classList.remove('off');
@@ -150,14 +153,12 @@ knobPower.addEventListener('click', () => {
     radio.classList.add('off');
     display.classList.add('off');
     knobPower.classList.add('off');
-
     try { player.pause(); } catch {}
     player.src = '';
     radio.classList.remove('playing');
     presets.forEach(p => p.classList.remove('active'));
     currentStation = null;
     setMuted(false);
-
     setDisplay('Off', { blink: false, off: true, marquee: false });
   }
 });
@@ -189,7 +190,7 @@ presets.forEach(preset => {
     presets.forEach(p => p.classList.remove('active'));
     preset.classList.add('active');
     
-    // Conectando: Parpadea pero NO se mueve (marquee: false)
+    // Conectando... (Parpadea, NO se mueve)
     setDisplay('Conectando...', { blink: true, off: false, marquee: false });
 
     player.src = src;
@@ -198,12 +199,12 @@ presets.forEach(preset => {
     player.play()
       .then(() => {
         radio.classList.add('playing');
-        // Reproduciendo: NO parpadea y SÍ se mueve (marquee: true)
+        // Sonando... (NO parpadea, SÍ se mueve)
         setDisplay(freq, { blink: false, off: false, marquee: true });
         currentStation = src;
       })
       .catch(err => {
-        console.error('Error:', err);
+        console.error(err);
         radio.classList.remove('playing');
         setDisplay('Error conexión', { blink: false, off: false, marquee: false });
         preset.classList.remove('active');
@@ -212,10 +213,8 @@ presets.forEach(preset => {
   });
 });
 
-// Slider Volumen
 volumeSlider.addEventListener('input', e => syncVolume(e.target.value));
 
-// Rueda del mouse
 radio.addEventListener('wheel', (e) => {
   if (!isOn) return;
   e.preventDefault();
@@ -226,7 +225,6 @@ radio.addEventListener('wheel', (e) => {
   syncVolume(v);
 }, { passive: false });
 
-// Eventos Audio
 player.addEventListener('playing', () => radio.classList.add('playing'));
 player.addEventListener('pause', () => radio.classList.remove('playing'));
 player.addEventListener('error', () => {
@@ -234,13 +232,13 @@ player.addEventListener('error', () => {
   setDisplay('Error', { blink: false, off: false, marquee: false });
 });
 
-// Registro SW
+// SW Register (con ruta relativa)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('./service-worker.js?ver=15')
+      .register('./service-worker.js?ver=16')
       .then(reg => console.log('SW OK:', reg.scope))
-      .catch(err => console.error('SW Error:', err));
+      .catch(err => console.error('SW Falló:', err));
   });
 }
 
