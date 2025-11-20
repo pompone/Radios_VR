@@ -1,12 +1,9 @@
 /* --- style.css --- */
 
-/* Reset y caja consistente */
+/* Reset y base */
 *, *::before, *::after { box-sizing: border-box; }
-
-/* Escala fluida */
 html { font-size: clamp(14px, 1.1vw, 16px); }
 
-/* ===== Fuente base ===== */
 body {
   margin: 0;
   padding: 20px;
@@ -17,20 +14,19 @@ body {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: Arial, Helvetica, sans-serif;
-  overflow: auto; /* Permite scroll si la pantalla es muy chica */
+  overflow-y: auto;
 }
 
-/* Fuente digital opcional (si la tienes) */
 @font-face {
   font-family: "Digital7";
   src: url("fonts/digital-7.ttf") format("truetype");
   font-display: swap;
 }
 
-/* Caja principal de la radio */
+/* Caja Radio */
 .radio {
   width: min(420px, 92vw);
-  min-height: 400px;
+  min-height: 420px; /* Un poco más de altura para evitar cortes */
   padding: 16px;
   background: linear-gradient(145deg, #f0f0f0, #d9d9d9);
   border-radius: 20px;
@@ -43,7 +39,6 @@ body {
   align-items: center;
   transition: filter 0.3s ease;
 }
-
 .radio.off { filter: brightness(80%) grayscale(20%); }
 
 /* Display */
@@ -55,14 +50,12 @@ body {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(0,255,0,0.25);
 }
-
 .display.off { box-shadow: inset 0 2px 8px rgba(0,0,0,0.8); }
 
-/* === Texto del display (CORREGIDO) === */
-/* Por defecto: Centrado y SIN animación automática */
+/* Texto Display */
 .display span {
   position: absolute;
   white-space: nowrap;
@@ -72,23 +65,20 @@ body {
   font-weight: bold;
   line-height: 30px;
   text-shadow: 0 0 8px #0f0;
-  
-  /* Centrado absoluto */
+  /* Centrado por defecto */
   left: 50%;
   transform: translateX(-50%);
   animation: none; 
 }
 
-/* OFF: Parpadeo lento estilo reloj */
+/* Animaciones de texto */
 .display.off span {
   animation: flickerDisplay 3s step-end infinite !important;
   color: #0f0;                 
 }
-
-/* Blink: Para "Seleccione..." y "Conectando..." */
-/* Fuerza la posición centrada para que no se mueva mientras parpadea */
 .blink { 
   animation: blink 1.1s steps(1, end) infinite !important; 
+  /* Forzamos centrado para que no salte */
   left: 50% !important;
   transform: translateX(-50%) !important;
 }
@@ -96,40 +86,38 @@ body {
 @keyframes blink { 50% { opacity: 0; } }
 @keyframes flickerDisplay { 0%,50%{opacity:0} 51%,100%{opacity:1} }
 
-/* Parlante */
+/* Parlante (Ajustado para móvil) */
 .speaker {
-  width: 96px; height: 96px; border-radius: 50%;
+  width: 90px; height: 90px; /* Un poco más chico por seguridad */
+  border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #444 0%, #111 70%);
   box-shadow:
     inset -5px -5px 15px rgba(0,0,0,0.7),
     inset 5px 5px 15px rgba(255,255,255,0.1),
     0 0 0 8px #555, 0 4px 10px rgba(0,0,0,0.3);
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   transition: transform 0.2s ease-out;
-  will-change: transform, box-shadow; /* Optimización para móviles */
+  will-change: transform; /* Optimización rendimiento */
 }
 
-/* Animación de latido SUAVE (Corregida para no salirse de márgenes) */
+/* Latido Suave */
 @keyframes speaker-beat {
   0% { transform: scale(1); box-shadow: 0 0 0 8px #555; }
-  25% { transform: scale(1.01); box-shadow: 0 0 4px 9px #555; } /* Escala reducida a 1.01 */
+  25% { transform: scale(1.03); box-shadow: 0 0 4px 9px #555; }
   50% { transform: scale(1); box-shadow: 0 0 0 8px #555; }
-  75% { transform: scale(1.01); box-shadow: 0 0 4px 9px #555; }
+  75% { transform: scale(1.03); box-shadow: 0 0 4px 9px #555; }
   100% { transform: scale(1); box-shadow: 0 0 0 8px #555; }
 }
-
 .radio.playing .speaker {
   animation: speaker-beat 1.2s ease-in-out infinite;
 }
 
-/* Rejilla del parlante */
 .speaker::before {
   content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
   width: 70%; height: 70%; border-radius: 50%;
   background: repeating-radial-gradient(circle at center, transparent 0 2px, #333 2px 4px);
 }
-/* Cono central */
 .speaker::after {
   content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
   width: 34px; height: 34px; border-radius: 50%;
@@ -138,7 +126,7 @@ body {
 }
 
 /* Controles */
-.controls { width: 100%; display: flex; justify-content: space-around; margin-bottom: 12px; gap: 8px; }
+.controls { width: 100%; display: flex; justify-content: space-around; margin-bottom: 16px; gap: 8px; }
 .control { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 
 .knob {
@@ -152,52 +140,43 @@ body {
 .knob:hover { transform: translateY(-2px); }
 .knob.off { background: linear-gradient(145deg, #ff6b6b, #c92a2a); }
 #knob-mute.off { background: linear-gradient(145deg, #51cf66, #2f9e44); }
-
 .icon { width: 22px; height: 22px; stroke: #333; stroke-width: 2; fill: none; }
-.knob-label { font-size: 0.8rem; color: #333; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.knob-label { font-size: 0.8rem; color: #333; font-weight: 600; text-transform: uppercase; }
 
 /* Presets */
 .presets {
-  width: 100%;
-  margin-bottom: 12px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
+  width: 100%; margin-bottom: 16px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
 }
 .preset {
-  padding: 8px 0;
+  padding: 10px 0;
   background: linear-gradient(145deg, #e0e0e0, #c0c0c0);
   color: #333; border: none; border-radius: 8px;
   box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
   cursor: pointer; transition: all 0.2s ease;
-  font-size: 0.95rem; font-weight: bold; min-width: 0; text-align: center;
+  font-size: 0.85rem; font-weight: bold;
 }
 .preset:hover { background: linear-gradient(145deg, #64b5f6, #1976d2); color: #fff; transform: translateY(-2px); }
 .preset.active { background: linear-gradient(145deg, #1976d2, #1565c0); color: #fff; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3); }
 
 /* Volumen */
 .volume { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.volume label { font-size: 0.9rem; color: #333; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.volume label { font-size: 0.9rem; color: #333; font-weight: 600; text-transform: uppercase; }
 .volume input[type="range"] { width: 90%; height: 6px; border-radius: 3px; background: #ddd; outline: none; -webkit-appearance: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
-.volume input[type="range"]::-webkit-slider-thumb,
-.volume input[type="range"]::-moz-range-thumb {
+.volume input[type="range"]::-webkit-slider-thumb {
   width: 20px; height: 20px; border-radius: 50%;
   background: linear-gradient(145deg, #f5f5f5, #d0d0d0);
-  cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 2px solid #999;
+  cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 2px solid #999; -webkit-appearance: none;
 }
 .vol-percentage { font-size: 0.8rem; color: #333; font-weight: bold; }
 
 /* Footer */
-.footer { margin-top: 16px; font-size: 0.85rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.footer { margin-top: 20px; font-size: 0.8rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); text-align: center; }
 .footer a { color: #ffd700; text-decoration: none; font-weight: bold; }
-.footer a:hover { color: #fff; text-decoration: underline; }
 
 @media (max-width: 480px) {
-  .presets { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .blink, .radio.playing .speaker { animation: none !important; }
+  .presets { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .radio { width: 95vw; padding: 12px; }
 }
 
 
