@@ -70,7 +70,6 @@ body {
   animation: none; 
 }
 
-/* Animaciones de texto */
 .display.off span {
   animation: flickerDisplay 3s step-end infinite !important;
   color: #0f0;                 
@@ -99,7 +98,6 @@ body {
   will-change: transform;
 }
 
-/* Latido Suave */
 @keyframes speaker-beat {
   0% { transform: scale(1); box-shadow: 0 0 0 8px #555; }
   25% { transform: scale(1.03); box-shadow: 0 0 4px 9px #555; }
@@ -145,15 +143,25 @@ body {
 .presets {
   width: 100%; margin-bottom: 16px;
   display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+  /* Permitimos que las filas crezcan si el botón crece */
+  align-items: stretch; 
 }
 .preset {
-  padding: 10px 0;
+  min-height: 40px; /* Altura mínima base */
+  padding: 4px;
   background: linear-gradient(145deg, #e0e0e0, #c0c0c0);
   color: #333; border: none; border-radius: 8px;
   box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
   cursor: pointer; transition: all 0.2s ease;
   font-size: 0.85rem; font-weight: bold;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  
+  /* Por defecto: corta texto largo con "..." */
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .preset:hover { background: linear-gradient(145deg, #64b5f6, #1976d2); color: #fff; transform: translateY(-2px); }
 .preset.active { 
@@ -162,16 +170,24 @@ body {
   box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3); 
 }
 
-/* Botón Agregar (+) */
+/* --- CLASES DE ADAPTACIÓN DE TEXTO --- */
+.preset.small-text {
+  font-size: 0.7rem; /* Texto más chico */
+}
+.preset.multiline {
+  font-size: 0.75rem;
+  white-space: normal; /* Permite saltar de línea */
+  line-height: 1.1;    /* Líneas pegaditas */
+  word-break: break-word;
+  min-height: 50px;    /* El botón crece */
+}
+
 .add-btn {
   font-size: 1.2rem;
   background: linear-gradient(145deg, #d4d4d4, #bababa);
   color: #555;
 }
-.add-btn:hover {
-  background: linear-gradient(145deg, #81c784, #4caf50);
-  color: #fff;
-}
+.add-btn:hover { background: linear-gradient(145deg, #81c784, #4caf50); color: #fff; }
 
 /* Volumen */
 .volume { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -192,7 +208,6 @@ body {
 }
 .vol-percentage { font-size: 0.8rem; color: #333; font-weight: bold; }
 
-/* Footer */
 .footer { margin-top: 20px; font-size: 0.8rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); text-align: center; }
 .footer a { color: #ffd700; text-decoration: none; font-weight: bold; }
 
@@ -200,6 +215,7 @@ body {
   .presets { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .radio { width: 95vw; padding: 12px; }
 }
+
 
 
 
