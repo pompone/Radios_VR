@@ -48,7 +48,7 @@ body {
   background: #000;
   border: 2px solid #333;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: hidden; /* IMPORTANTE: Oculta el texto que sale */
   position: relative;
   margin-bottom: 16px;
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(0,255,0,0.25);
@@ -143,7 +143,7 @@ body {
 .presets {
   width: 100%; margin-bottom: 16px;
   display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
-  align-items: stretch; /* Estira la altura si uno crece */
+  align-items: stretch;
 }
 
 .preset {
@@ -155,27 +155,33 @@ body {
   cursor: pointer; transition: all 0.2s ease;
   font-size: 0.85rem; font-weight: bold;
   
-  /* Por defecto: 1 línea, corta con puntos suspensivos */
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
-  display: flex; align-items: center; justify-content: center;
+  /* Flex para centrado perfecto */
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  text-align: center;
 }
 .preset:hover { background: linear-gradient(145deg, #64b5f6, #1976d2); color: #fff; transform: translateY(-2px); }
 .preset.active { background: linear-gradient(145deg, #ff9800, #f57c00); color: #fff; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3); }
 
-/* --- ADAPTACIÓN INTELIGENTE DE TEXTO --- */
+/* --- ADAPTACIÓN DE TEXTO --- */
 .preset.small-text {
-  font-size: 0.7rem; /* Reducimos fuente primero */
+  font-size: 0.7rem; 
 }
 
 .preset.multiline {
-  font-size: 0.7rem; /* Mantenemos fuente chica */
-  white-space: normal; /* Permitimos saltos de línea */
+  font-size: 0.7rem; 
+  white-space: normal; /* Permite saltos */
   line-height: 1.1;
-  word-wrap: break-word; /* Romper palabras largas si es necesario */
+  word-wrap: break-word; 
   padding: 2px;
-  /* El height crecerá automáticamente gracias al grid stretch */
+  /* Mantiene centrado vertical y horizontal */
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 .add-btn {
