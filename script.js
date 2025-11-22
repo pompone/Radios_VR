@@ -18,36 +18,43 @@ document.addEventListener('DOMContentLoaded', () => {
     let isOn = false;
     let isMuted = false;
     let currentStation = null;
-    let marquee = { running: false, rafId: null, lastTs: null, x: 0, speed: 45, gap: 60, width: 0 };
+    let marquee = { running: false, rafId: null, lastTs: null, x: 0, speed: 60, width: 0 };
 
     // --- 1. Gestión de Presets y Texto Adaptable ---
 
     function loadCustomPresets() {
-      // 1. Cargar del Storage
       const stored = JSON.parse(localStorage.getItem('myCustomRadios') || '[]');
       stored.forEach(radioData => {
         createPresetButton(radioData.name, radioData.url, false);
       });
       
-      // 2. Ajustar textos de los botones existentes (HTML original)
+      // Ajustar botones originales
       document.querySelectorAll('.preset:not(.add-btn)').forEach(btn => {
-        const name = btn.dataset.freq || btn.textContent.trim();
-        checkLabelLength(btn, name);
+        fitButtonText(btn);
       });
 
-      // 3. Mover botón (+) al final siempre
+      // Mover botón (+) al final
       if(btnAdd) presetsContainer.appendChild(btnAdd);
     }
 
-    function checkLabelLength(btn, name) {
-      // Heurística simple según longitud de caracteres
-      // Puedes ajustar estos números según tu gusto
-      if (name.length > 20) {
-        btn.classList.add('multiline'); // Texto muy largo -> Agranda el botón
-      } else if (name.length > 12) {
-        btn.classList.add('small-text'); // Texto medio -> Achica la letra
+    // Función inteligente para ajustar texto
+    function fitButtonText(btn) {
+      // Quitamos clases para medir limpio
+      btn.classList.remove('small-text', 'multiline');
+      
+      // 1. Check overflow normal
+      if (isOverflowing(btn)) {
+        btn.classList.add('small-text');
+        
+        // 2. Si sigue desbordando con letra chica, permitimos multilínea
+        if (isOverflowing(btn)) {
+            btn.classList.add('multiline');
+        }
       }
-      // Si es corto, queda con el estilo por defecto
+    }
+
+    function isOverflowing(el) {
+       return el.scrollWidth > el.clientWidth;
     }
 
     function createPresetButton(name, url, saveToStorage = true) {
@@ -57,9 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.dataset.freq = name; 
       btn.dataset.src = url;
 
-      // Aplicar lógica de tamaño
-      checkLabelLength(btn, name);
-
       btn.addEventListener('click', () => playStation(btn));
 
       if(btnAdd) {
@@ -67,6 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
           presetsContainer.appendChild(btn);
       }
+      
+      // Ajustamos el texto después de insertarlo en el DOM (para poder medir)
+      requestAnimationFrame(() => fitButtonText(btn));
 
       if (saveToStorage) {
         const stored = JSON.parse(localStorage.getItem('myCustomRadios') || '[]');
@@ -75,47 +82,53 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // --- 2. Marquee ---
+    // --- 2. Marquee (Texto desplazable corregido) ---
     const marqA = document.createElement('span');
-    const marqB = document.createElement('span');
-    [marqA, marqB].forEach(s => {
-      s.className = 'marq'; s.style.position = 'absolute'; s.style.whiteSpace = 'nowrap';
-      s.style.top = '0'; s.style.color = '#0f0'; s.style.textShadow = '0 0 8px #0f0';
-      s.style.display = 'none'; s.style.left = '0'; s.style.transform = 'none';
-    });
+    marqA.className = 'marq'; marqA.style.position = 'absolute'; marqA.style.whiteSpace = 'nowrap';
+    marqA.style.top = '0'; marqA.style.color = '#0f0'; marqA.style.textShadow = '0 0 8px #0f0';
+    marqA.style.display = 'none'; marqA.style.left = '0'; marqA.style.transform = 'none';
     display.appendChild(marqA);
-    display.appendChild(marqB);
 
     function hideMarquee() {
       if (marquee.rafId) cancelAnimationFrame(marquee.rafId);
       marquee.running = false; marquee.lastTs = null;
-      marqA.style.display = 'none'; marqB.style.display = 'none';
+      marqA.style.display = 'none';
       displayText.style.display = 'inline-block';
     }
 
     function startMarquee(text) {
       if (display.classList.contains('off')) return;
-      marqA.textContent = text; marqB.textContent = text;
-      marqA.style.display = 'inline-block'; marqB.style.display = 'inline-block';
+      
+      marqA.textContent = text;
+      marqA.style.display = 'inline-block';
       displayText.style.display = 'none';
 
       requestAnimationFrame(() => {
         const containerW = display.clientWidth;
         const textW = marqA.offsetWidth;
         marquee.width = textW;
-        marquee.x = containerW + 20; marquee.lastTs = null;
+        
+        // CORRECCIÓN: Inicia totalmente a la derecha
+        marquee.x = containerW; 
+        marquee.lastTs = null;
 
         function step(ts) {
           if (!marquee.running) return;
           if (!marquee.lastTs) marquee.lastTs = ts;
           const dt = (ts - marquee.lastTs) / 1000;
           marquee.lastTs = ts;
+
           marquee.x -= marquee.speed * dt;
-          if (marquee.x < -(textW + marquee.gap)) marquee.x += (textW + marquee.gap);
+
+          // CORRECCIÓN: Resetea solo cuando el texto salió COMPLETAMENTE por la izquierda
+          if (marquee.x < -marquee.width) {
+             marquee.x = containerW; // Vuelve a empezar desde la derecha limpia
+          }
+
           marqA.style.transform = `translateX(${marquee.x}px)`;
-          marqB.style.transform = `translateX(${marquee.x + textW + marquee.gap}px)`;
           marquee.rafId = requestAnimationFrame(step);
         }
+        
         marquee.running = true;
         marquee.rafId = requestAnimationFrame(step);
       });
@@ -125,12 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
       hideMarquee();
       displayText.textContent = text;
       display.classList.toggle('off', off);
+      
       if (blink) {
         displayText.classList.add('blink');
         displayText.style.transform = ''; displayText.style.left = '';
       } else {
         displayText.classList.remove('blink');
       }
+
       if (useMarquee) startMarquee(text);
     }
 
@@ -156,17 +171,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const percentageDisplay = Math.round(vol * 100);
       volPercentage.textContent = percentageDisplay + '%';
 
-      // --- CORRECCIÓN DE BARRA VISUAL ---
+      // --- BARRA VISUAL (Método Cortina) ---
       const sliderWidth = volumeSlider.offsetWidth || 300; 
       const thumbWidth = 20; 
       const centerPos = (vol * (sliderWidth - thumbWidth)) + (thumbWidth / 2);
-      const p = (centerPos / sliderWidth) * 100;
-      
-      // Validamos 'p' por seguridad para evitar errores que cuelguen el script
-      const safeP = isFinite(p) ? p : 50; 
+      let p = (centerPos / sliderWidth) * 100;
+      if (!isFinite(p)) p = 50;
 
       volumeSlider.style.background = `
-        linear-gradient(to right, #ddd, #ddd) no-repeat right / ${100 - safeP}% 100%,
+        linear-gradient(to right, #ddd, #ddd) no-repeat right / ${100 - p}% 100%,
         linear-gradient(to right, #4CAF50 0%, #FFEB3B 50%, #F44336 100%) no-repeat left / 100% 100%
       `;
 
@@ -177,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // --- 4. Play ---
+    // --- 4. Reproducción ---
     function playStation(presetBtn) {
       if (!isOn) return;
       const freq = presetBtn.dataset.freq;
@@ -215,22 +228,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 5. Event Listeners ---
+    // --- 5. Eventos ---
     
-    // Inicialización segura
+    // Estado inicial
     radio.classList.add('off');
     display.classList.add('off');
     setDisplay('Off', { blink: false, off: true, marquee: false });
     
-    // Carga inicial
     loadCustomPresets();
     
-    // Listeners de presets originales
     document.querySelectorAll('.preset:not(.add-btn)').forEach(p => {
         p.addEventListener('click', () => playStation(p));
     });
 
-    // Forzar actualización visual de volumen tras un pequeño delay de renderizado
     setTimeout(() => syncVolume(volumeSlider.value), 100);
 
     // Power
@@ -241,7 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
         display.classList.remove('off');
         knobPower.classList.remove('off');
         setDisplay('Seleccione una emisora', { blink: true, off: false, marquee: false });
-        syncVolume(volumeSlider.value); // Refrescar volumen al prender
+        syncVolume(volumeSlider.value);
+        
+        // Recalcular textos al encender (por si la fuente no había cargado bien antes)
+        document.querySelectorAll('.preset:not(.add-btn)').forEach(btn => fitButtonText(btn));
+
       } else {
         radio.classList.add('off');
         display.classList.add('off');
@@ -262,24 +276,22 @@ document.addEventListener('DOMContentLoaded', () => {
       setMuted(!isMuted);
     });
 
-    // Botón Agregar
+    // Botón +
     if (btnAdd) {
       btnAdd.addEventListener('click', () => {
-        const name = prompt("Ingrese el nombre de la radio (Ej: Mi Radio):");
+        const name = prompt("Ingrese el nombre de la radio:");
         if (!name) return;
         const url = prompt("Ingrese la URL del streaming (.mp3/aac):");
         if (!url) return;
 
         if (url.startsWith('http')) {
             createPresetButton(name, url, true);
-            alert('Radio agregada correctamente.');
         } else {
             alert('URL inválida. Debe comenzar con http o https.');
         }
       });
     }
 
-    // Inputs
     volumeSlider.addEventListener('input', e => syncVolume(e.target.value));
     
     window.addEventListener('resize', () => {
@@ -307,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SW
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js?ver=19').catch(() => {});
+      navigator.serviceWorker.register('./service-worker.js?ver=20').catch(() => {});
     }
 
-}); // Fin DOMContentLoaded
+});
