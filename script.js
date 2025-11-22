@@ -1,138 +1,3 @@
-// --- script.js ---
-
-// Elementos DOM
-const radio = document.getElementById('radio');
-const display = document.getElementById('display');
-const displayText = document.getElementById('display-text');
-const knobPower = document.getElementById('knob-power');
-const knobMute = document.getElementById('knob-mute');
-const presetsContainer = document.getElementById('presets-container');
-const btnAdd = document.getElementById('btn-add');
-const volumeSlider = document.getElementById('volume');
-const volPercentage = document.getElementById('vol-percentage');
-const player = document.getElementById('player');
-
-// Variables Estado
-let isOn = false;
-let isMuted = false;
-let currentStation = null;
-// Objeto Marquee
-let marquee = { running: false, rafId: null, lastTs: null, x: 0, speed: 45, gap: 60, width: 0 };
-
-// --- 1. Inicialización de Presets Guardados ---
-function loadCustomPresets() {
-  const stored = JSON.parse(localStorage.getItem('myCustomRadios') || '[]');
-  stored.forEach(radioData => {
-    createPresetButton(radioData.name, radioData.url, false);
-  });
-  // Movemos el botón "+" siempre al final
-  if(btnAdd) presetsContainer.appendChild(btnAdd);
-}
-
-function createPresetButton(name, url, saveToStorage = true) {
-  const btn = document.createElement('button');
-  btn.className = 'preset';
-  btn.textContent = name;
-  btn.dataset.freq = name; // Usamos el nombre para el display
-  btn.dataset.src = url;
-
-  // Evento click (lógica de radio)
-  btn.addEventListener('click', () => playStation(btn));
-
-  // Insertar antes del botón Add
-  if(btnAdd) {
-      presetsContainer.insertBefore(btn, btnAdd);
-  } else {
-      presetsContainer.appendChild(btn);
-  }
-
-  if (saveToStorage) {
-    const stored = JSON.parse(localStorage.getItem('myCustomRadios') || '[]');
-    stored.push({ name, url });
-    localStorage.setItem('myCustomRadios', JSON.stringify(stored));
-  }
-}
-
-// --- 2. Marquee (Texto desplazable) ---
-const marqA = document.createElement('span');
-const marqB = document.createElement('span');
-[marqA, marqB].forEach(s => {
-  s.className = 'marq';
-  s.style.position = 'absolute'; s.style.whiteSpace = 'nowrap'; s.style.top = '0';
-  s.style.color = '#0f0'; s.style.textShadow = '0 0 8px #0f0';
-  s.style.display = 'none'; s.style.left = '0'; s.style.transform = 'none'; s.style.animation = 'none';
-});
-display.appendChild(marqA);
-display.appendChild(marqB);
-
-function hideMarquee() {
-  if (marquee.rafId) cancelAnimationFrame(marquee.rafId);
-  marquee.running = false; marquee.lastTs = null;
-  marqA.style.display = 'none'; marqB.style.display = 'none';
-  displayText.style.display = 'inline-block';
-}
-
-function startMarquee(text) {
-  if (display.classList.contains('off')) return;
-  marqA.textContent = text; marqB.textContent = text;
-  marqA.style.display = 'inline-block'; marqB.style.display = 'inline-block';
-  displayText.style.display = 'none';
-
-  requestAnimationFrame(() => {
-    const containerW = display.clientWidth;
-    const textW = marqA.offsetWidth;
-    marquee.width = textW;
-    marquee.x = containerW + 20; marquee.lastTs = null;
-
-    function step(ts) {
-      if (!marquee.running) return;
-      if (!marquee.lastTs) marquee.lastTs = ts;
-      const dt = (ts - marquee.lastTs) / 1000;
-      marquee.lastTs = ts;
-      marquee.x -= marquee.speed * dt;
-      if (marquee.x < -(textW + marquee.gap)) marquee.x += (textW + marquee.gap);
-      marqA.style.transform = `translateX(${marquee.x}px)`;
-      marqB.style.transform = `translateX(${marquee.x + textW + marquee.gap}px)`;
-      marquee.rafId = requestAnimationFrame(step);
-    }
-    marquee.running = true;
-    marquee.rafId = requestAnimationFrame(step);
-  });
-}
-
-function setDisplay(text, { blink = false, off = false, marquee: useMarquee = false } = {}) {
-  hideMarquee();
-  displayText.textContent = text;
-  display.classList.toggle('off', off);
-  
-  if (blink) {
-    displayText.classList.add('blink');
-    displayText.style.transform = ''; displayText.style.left = '';
-  } else {
-    displayText.classList.remove('blink');
-  }
-
-  if (useMarquee) startMarquee(text);
-}
-
-// --- 3. Audio / Volumen / Animación Parlante ---
-
-// Función para controlar la animación del parlante
-function updateSpeakerAnimation() {
-  if (!player.paused && !player.muted && player.volume > 0.01 && isOn) {
-    radio.classList.add('playing');
-  } else {
-    radio.classList.remove('playing');
-  }
-}
-
-function setMuted(state) {
-  isMuted = state;
-  player.muted = state;
-  knobMute.classList.toggle('off', state);
-  updateSpeakerAnimation();
-}
-
 function syncVolume(v) {
   // Asegurar rango 0-1
   const vol = Math.max(0, Math.min(1, parseFloat(v) || 0));
@@ -141,25 +6,23 @@ function syncVolume(v) {
   const percentageDisplay = Math.round(vol * 100);
   volPercentage.textContent = percentageDisplay + '%';
   
-  // --- CORRECCIÓN GEOMÉTRICA DE LA BARRA ---
-  // Obtenemos el ancho real del slider en pantalla
-  const sliderWidth = volumeSlider.offsetWidth || 300; // Fallback 300px
-  const thumbWidth = 20; // Ancho del botón en CSS (20px)
+  // --- LÓGICA DE BARRA VISUAL (CORREGIDA) ---
+  // 1. Calculamos la posición del CENTRO del botón (thumb) en porcentaje relativo
+  // Esto corrige el desfasaje geométrico del botón de 20px
+  const sliderWidth = volumeSlider.offsetWidth || 300;
+  const thumbWidth = 20; 
+  // Posición en píxeles del centro del botón
+  const centerPos = (vol * (sliderWidth - thumbWidth)) + (thumbWidth / 2);
+  // Convertimos a porcentaje (0 - 100)
+  const p = (centerPos / sliderWidth) * 100;
 
-  // Calculamos dónde está el CENTRO del botón en píxeles
-  // Fórmula: (volumen * (espacio_recorrido)) + (mitad_del_boton)
-  const centerPosition = (vol * (sliderWidth - thumbWidth)) + (thumbWidth / 2);
-  
-  // Convertimos esa posición a porcentaje del ancho total
-  const gradientPercent = (centerPosition / sliderWidth) * 100;
-
-  // Aplicamos el gradiente usando ese porcentaje corregido
-  volumeSlider.style.background = `linear-gradient(to right, 
-    #4CAF50 0%, 
-    #FFEB3B 50%, 
-    #F44336 ${gradientPercent}%, 
-    #ddd ${gradientPercent}%, 
-    #ddd 100%)`;
+  // 2. Aplicamos el truco de la doble capa (Cortina Gris sobre Gradiente Fijo)
+  // Capa 1 (Arriba): Gris (#ddd). Ancho = Lo que falta para llegar a 100% (100 - p). Alineado a la derecha.
+  // Capa 2 (Abajo): Gradiente Tricolor. Ancho = 100%. Fijo.
+  volumeSlider.style.background = `
+    linear-gradient(to right, #ddd, #ddd) no-repeat right / ${100 - p}% 100%,
+    linear-gradient(to right, #4CAF50 0%, #FFEB3B 50%, #F44336 100%) no-repeat left / 100% 100%
+  `;
 
   // Lógica de Mute / Animación
   if (vol <= 0.0001) {
@@ -168,146 +31,4 @@ function syncVolume(v) {
     if (isMuted) setMuted(false);
     updateSpeakerAnimation();
   }
-}
-
-// --- 4. Lógica de Reproducción ---
-
-function playStation(presetBtn) {
-  if (!isOn) return;
-
-  const freq = presetBtn.dataset.freq;
-  const src = presetBtn.dataset.src;
-  if (!src) return;
-
-  if (currentStation === src && !player.paused) {
-    player.pause();
-    updateSpeakerAnimation();
-    presetBtn.classList.remove('active');
-    setDisplay('En pausa', { blink: false, off: false, marquee: false });
-    currentStation = null;
-    return;
-  }
-
-  document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
-  presetBtn.classList.add('active');
-  
-  setDisplay('Conectando...', { blink: true, off: false, marquee: false });
-
-  player.src = src;
-  player.volume = parseFloat(volumeSlider.value);
-
-  player.play()
-    .then(() => {
-      updateSpeakerAnimation();
-      setDisplay(freq, { blink: false, off: false, marquee: true });
-      currentStation = src;
-    })
-    .catch(err => {
-      if (!isOn) return;
-      console.error(err);
-      radio.classList.remove('playing');
-      setDisplay('Error conexión', { blink: false, off: false, marquee: false });
-      presetBtn.classList.remove('active');
-      currentStation = null;
-    });
-}
-
-// --- 5. Event Listeners ---
-
-// Init
-radio.classList.add('off');
-display.classList.add('off');
-setDisplay('Off', { blink: false, off: true, marquee: false });
-
-// Forzamos un cálculo inicial con delay para asegurar que el DOM cargó el ancho
-setTimeout(() => syncVolume(volumeSlider.value), 100);
-loadCustomPresets();
-
-document.querySelectorAll('.preset:not(.add-btn)').forEach(p => {
-  p.addEventListener('click', () => playStation(p));
-});
-
-// Botón Power
-knobPower.addEventListener('click', () => {
-  isOn = !isOn;
-  if (isOn) {
-    radio.classList.remove('off');
-    display.classList.remove('off');
-    knobPower.classList.remove('off');
-    setDisplay('Seleccione una emisora', { blink: true, off: false, marquee: false });
-    updateSpeakerAnimation();
-    // Recalcular volumen al encender por si cambió el tamaño de ventana
-    syncVolume(volumeSlider.value);
-  } else {
-    radio.classList.add('off');
-    display.classList.add('off');
-    knobPower.classList.add('off');
-    
-    try { player.pause(); } catch {}
-    player.src = ''; 
-    
-    updateSpeakerAnimation();
-    document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
-    currentStation = null;
-    setMuted(false);
-    setDisplay('Off', { blink: false, off: true, marquee: false });
-  }
-});
-
-// Botón Mute
-knobMute.addEventListener('click', () => {
-  if (!isOn) return;
-  setMuted(!isMuted);
-});
-
-// Botón Agregar (+)
-if (btnAdd) {
-  btnAdd.addEventListener('click', () => {
-    const name = prompt("Ingrese el nombre de la radio (Ej: Mi Radio):");
-    if (!name) return;
-    
-    const url = prompt("Ingrese la URL del streaming (.mp3/aac):");
-    if (!url) return;
-
-    if (url.startsWith('http')) {
-        createPresetButton(name, url, true);
-        alert('Radio agregada correctamente.');
-    } else {
-        alert('URL inválida. Debe comenzar con http o https.');
-    }
-  });
-}
-
-// Inputs
-volumeSlider.addEventListener('input', e => syncVolume(e.target.value));
-
-// Actualizar gradiente al redimensionar ventana (responsive)
-window.addEventListener('resize', () => {
-    if(isOn) syncVolume(volumeSlider.value);
-});
-
-radio.addEventListener('wheel', (e) => {
-  if (!isOn) return;
-  e.preventDefault();
-  let v = parseFloat(volumeSlider.value) || 0;
-  v += (e.deltaY < 0 ? 1 : -1) * 0.05;
-  v = Math.max(0, Math.min(1, v));
-  volumeSlider.value = v.toFixed(2);
-  syncVolume(v);
-}, { passive: false });
-
-player.addEventListener('playing', () => updateSpeakerAnimation());
-player.addEventListener('pause', () => updateSpeakerAnimation());
-
-player.addEventListener('error', () => {
-  if (!isOn) return;
-  updateSpeakerAnimation();
-  setDisplay('Error', { blink: false, off: false, marquee: false });
-});
-
-// SW
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js?ver=18').catch(() => {});
-  });
 }
