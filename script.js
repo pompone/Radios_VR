@@ -14,38 +14,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const volPercentage = document.getElementById('vol-percentage');
     const player = document.getElementById('player');
 
+    // Modal DOM
+    const modal = document.getElementById('modal-add');
+    const btnModalSave = document.getElementById('btn-modal-save');
+    const btnModalCancel = document.getElementById('btn-modal-cancel');
+    const inputName = document.getElementById('modal-name');
+    const inputUrl = document.getElementById('modal-url');
+
     // Variables Estado
     let isOn = false;
     let isMuted = false;
     let currentStation = null;
-    // Marquee: Solo necesitamos un objeto simple ahora
+    let savedVolume = 0.5; 
+    
+    // Marquee (Variables de animación)
     let marquee = { running: false, rafId: null, lastTs: null, x: 0, speed: 65, width: 0 }; 
 
-    // --- 1. Gestión de Presets y Texto Adaptable ---
+    // --- 1. Inicialización de Presets ---
 
     function loadCustomPresets() {
       const stored = JSON.parse(localStorage.getItem('myCustomRadios') || '[]');
       stored.forEach(radioData => {
+        // false = no guardar de nuevo en storage (ya están ahí)
         createPresetButton(radioData.name, radioData.url, false);
       });
       
-      // Ajustar botones originales
+      // Ajustar texto de los botones originales (HTML)
       document.querySelectorAll('.preset:not(.add-btn)').forEach(btn => {
         fitButtonText(btn);
       });
 
+      // Mover botón (+) al final
       if(btnAdd) presetsContainer.appendChild(btnAdd);
     }
 
-    // Función de ajuste de texto mejorada
     function fitButtonText(btn) {
       btn.classList.remove('small-text', 'multiline');
-      
-      // 1. Check overflow normal
       if (isOverflowing(btn)) {
         btn.classList.add('small-text');
-        
-        // 2. Si sigue desbordando, pasamos a multilinea
         if (isOverflowing(btn)) {
             btn.classList.add('multiline');
         }
@@ -58,11 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createPresetButton(name, url, saveToStorage = true) {
       const btn = document.createElement('button');
-      btn.className = 'preset';
+      btn.className = 'preset custom-preset'; // Agregamos clase para identificarlo
       btn.textContent = name;
       btn.dataset.freq = name; 
       btn.dataset.src = url;
 
+      // Evento Click: Aquí asignamos la función de reproducir
       btn.addEventListener('click', () => playStation(btn));
 
       if(btnAdd) {
@@ -71,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
           presetsContainer.appendChild(btn);
       }
       
-      // Esperamos un frame para que el navegador renderice y podamos medir
       requestAnimationFrame(() => fitButtonText(btn));
 
       if (saveToStorage) {
@@ -81,8 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // --- 2. Marquee (Texto desplazable tipo Letrero) ---
-    // Usamos SOLO UN span, ya no necesitamos el B para el bucle infinito
+    // --- 2. Marquee (Efecto Letrero LED) ---
     const marqA = document.createElement('span');
     marqA.className = 'marq'; 
     marqA.style.position = 'absolute'; 
@@ -109,12 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
       marqA.style.display = 'inline-block';
       displayText.style.display = 'none';
 
-      // Esperamos a que se renderice para medir anchos
       requestAnimationFrame(() => {
         const containerW = display.clientWidth;
         const textW = marqA.offsetWidth;
         
-        // CORRECCIÓN: Posición inicial = Ancho del contenedor (totalmente a la derecha fuera de vista)
+        // CORRECCIÓN: Inicia escondido a la derecha
         marquee.x = containerW; 
         marquee.width = textW;
         marquee.lastTs = null;
@@ -125,12 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const dt = (ts - marquee.lastTs) / 1000;
           marquee.lastTs = ts;
 
-          // Mover a la izquierda
           marquee.x -= marquee.speed * dt;
 
-          // CORRECCIÓN: Si la posición X es menor que el ancho negativo del texto
-          // (significa que el texto ya salió completamente por la izquierda)
-          // entonces reseteamos a la derecha.
+          // CORRECCIÓN: Resetea solo cuando TODO el texto salió por la izquierda
           if (marquee.x < -marquee.width) {
              marquee.x = containerW; 
           }
@@ -168,19 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    function setMuted(state) {
-      isMuted = state;
-      player.muted = state;
-      knobMute.classList.toggle('off', state);
-      updateSpeakerAnimation();
-    }
-
     function syncVolume(v) {
       const vol = Math.max(0, Math.min(1, parseFloat(v) || 0));
       player.volume = vol;
       const percentageDisplay = Math.round(vol * 100);
       volPercentage.textContent = percentageDisplay + '%';
 
+      // Barra visual
       const sliderWidth = volumeSlider.offsetWidth || 300; 
       const thumbWidth = 20; 
       const centerPos = (vol * (sliderWidth - thumbWidth)) + (thumbWidth / 2);
@@ -192,11 +187,21 @@ document.addEventListener('DOMContentLoaded', () => {
         linear-gradient(to right, #4CAF50 0%, #FFEB3B 50%, #F44336 100%) no-repeat left / 100% 100%
       `;
 
-      if (vol <= 0.0001) updateSpeakerAnimation();
-      else {
-        if (isMuted) setMuted(false);
-        updateSpeakerAnimation();
+      // Lógica Mute
+      if (vol <= 0.001) {
+        if (!isMuted) {
+             isMuted = true;
+             knobMute.classList.add('off'); // Verde
+        }
+      } else {
+        if (isMuted) {
+             isMuted = false;
+             knobMute.classList.remove('off');
+        }
+        savedVolume = vol;
       }
+      
+      updateSpeakerAnimation();
     }
 
     // --- 4. Reproducción ---
@@ -206,21 +211,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const src = presetBtn.dataset.src;
       if (!src) return;
 
-      if (currentStation === src && !player.paused) {
-        player.pause();
-        updateSpeakerAnimation();
-        presetBtn.classList.remove('active');
-        setDisplay('En pausa', { blink: false, off: false, marquee: false });
-        currentStation = null;
-        return;
-      }
-
+      // Reseteamos visualmente los botones
       document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
       presetBtn.classList.add('active');
+      
       setDisplay('Conectando...', { blink: true, off: false, marquee: false });
 
       player.src = src;
       player.volume = parseFloat(volumeSlider.value);
+      
       player.play()
         .then(() => {
           updateSpeakerAnimation();
@@ -228,6 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
           currentStation = src;
         })
         .catch(err => {
+          // Ignoramos errores de interrupción (AbortError) por clicks rápidos
+          if (err.name === 'AbortError') return;
+
           if (!isOn) return;
           console.error(err);
           radio.classList.remove('playing');
@@ -237,18 +239,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 5. Eventos ---
+    // --- 5. Lógica del Modal (Agregar Radio) ---
+    function openModal() {
+        if (!isOn) return; 
+        modal.classList.remove('hidden');
+        inputName.value = '';
+        inputUrl.value = '';
+        inputName.focus();
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    function saveStation() {
+        const name = inputName.value.trim();
+        const url = inputUrl.value.trim();
+        
+        if (!name || !url) {
+            alert("Por favor completa ambos campos.");
+            return;
+        }
+        
+        // Advertencia de Protocolo Mixto
+        if (location.protocol === 'https:' && url.startsWith('http:')) {
+             if(!confirm("ADVERTENCIA: Estás en una página segura (HTTPS) e intentas agregar una radio insegura (HTTP). Es muy probable que no se escuche. ¿Deseas agregarla de todas formas?")) {
+                 return;
+             }
+        }
+
+        createPresetButton(name, url, true);
+        closeModal();
+    }
+
+    // --- 6. Event Listeners ---
     
+    // Init
     radio.classList.add('off');
     display.classList.add('off');
     setDisplay('Off', { blink: false, off: true, marquee: false });
     
     loadCustomPresets();
     
-    document.querySelectorAll('.preset:not(.add-btn)').forEach(p => {
+    // CORRECCIÓN IMPORTANTE:
+    // Solo agregamos listeners globales a los botones ORIGINALES del HTML.
+    // Los botones "custom" ya tienen su listener asignado en createPresetButton.
+    document.querySelectorAll('.preset:not(.add-btn):not(.custom-preset)').forEach(p => {
         p.addEventListener('click', () => playStation(p));
     });
 
+    // Ajuste inicial de volumen
     setTimeout(() => syncVolume(volumeSlider.value), 100);
 
     // Power
@@ -259,8 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         display.classList.remove('off');
         knobPower.classList.remove('off');
         setDisplay('Seleccione una emisora', { blink: true, off: false, marquee: false });
-        syncVolume(volumeSlider.value);
-        // Re-chequear textos al encender
+        syncVolume(volumeSlider.value); 
         document.querySelectorAll('.preset:not(.add-btn)').forEach(btn => fitButtonText(btn));
       } else {
         radio.classList.add('off');
@@ -271,33 +310,40 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSpeakerAnimation();
         document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
         currentStation = null;
-        setMuted(false);
+        if(isMuted) {
+           isMuted = false;
+           knobMute.classList.remove('off');
+        }
         setDisplay('Off', { blink: false, off: true, marquee: false });
       }
     });
 
-    // Mute
+    // Mute (Con memoria)
     knobMute.addEventListener('click', () => {
       if (!isOn) return;
-      setMuted(!isMuted);
+      
+      if (isMuted) {
+          // Restaurar volumen
+          let target = savedVolume > 0.01 ? savedVolume : 0.5;
+          volumeSlider.value = target;
+          syncVolume(target);
+      } else {
+          // Mutear
+          savedVolume = parseFloat(volumeSlider.value);
+          volumeSlider.value = 0;
+          syncVolume(0); 
+      }
     });
 
-    // Botón +
-    if (btnAdd) {
-      btnAdd.addEventListener('click', () => {
-        const name = prompt("Ingrese el nombre de la radio:");
-        if (!name) return;
-        const url = prompt("Ingrese la URL del streaming (.mp3/aac):");
-        if (!url) return;
+    // Modal Events
+    if (btnAdd) btnAdd.addEventListener('click', openModal);
+    btnModalCancel.addEventListener('click', closeModal);
+    btnModalSave.addEventListener('click', saveStation);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
 
-        if (url.startsWith('http')) {
-            createPresetButton(name, url, true);
-        } else {
-            alert('URL inválida. Debe comenzar con http o https.');
-        }
-      });
-    }
-
+    // Inputs
     volumeSlider.addEventListener('input', e => syncVolume(e.target.value));
     
     window.addEventListener('resize', () => {
@@ -314,18 +360,25 @@ document.addEventListener('DOMContentLoaded', () => {
       syncVolume(v);
     }, { passive: false });
 
+    // Player Events
     player.addEventListener('playing', () => updateSpeakerAnimation());
     player.addEventListener('pause', () => updateSpeakerAnimation());
     
     player.addEventListener('error', () => {
       if (!isOn) return;
       updateSpeakerAnimation();
-      setDisplay('Error', { blink: false, off: false, marquee: false });
+      
+      // Diagnóstico de error HTTPS vs HTTP
+      if (player.src.startsWith('http:') && location.protocol === 'https:') {
+          setDisplay('Error: Usar HTTPS', { blink: false, off: false, marquee: false });
+      } else {
+          setDisplay('Error', { blink: false, off: false, marquee: false });
+      }
     });
 
-    // SW
+    // SW Register
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js?ver=21').catch(() => {});
+      navigator.serviceWorker.register('./service-worker.js?ver=23').catch(() => {});
     }
 
 });
