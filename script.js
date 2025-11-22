@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isOn = false;
     let isMuted = false;
     let currentStation = null;
-    let marquee = { running: false, rafId: null, lastTs: null, x: 0, speed: 60, width: 0 };
+    // Marquee: Solo necesitamos un objeto simple ahora
+    let marquee = { running: false, rafId: null, lastTs: null, x: 0, speed: 65, width: 0 }; 
 
     // --- 1. Gestión de Presets y Texto Adaptable ---
 
@@ -33,20 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
         fitButtonText(btn);
       });
 
-      // Mover botón (+) al final
       if(btnAdd) presetsContainer.appendChild(btnAdd);
     }
 
-    // Función inteligente para ajustar texto
+    // Función de ajuste de texto mejorada
     function fitButtonText(btn) {
-      // Quitamos clases para medir limpio
       btn.classList.remove('small-text', 'multiline');
       
       // 1. Check overflow normal
       if (isOverflowing(btn)) {
         btn.classList.add('small-text');
         
-        // 2. Si sigue desbordando con letra chica, permitimos multilínea
+        // 2. Si sigue desbordando, pasamos a multilinea
         if (isOverflowing(btn)) {
             btn.classList.add('multiline');
         }
@@ -72,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
           presetsContainer.appendChild(btn);
       }
       
-      // Ajustamos el texto después de insertarlo en el DOM (para poder medir)
+      // Esperamos un frame para que el navegador renderice y podamos medir
       requestAnimationFrame(() => fitButtonText(btn));
 
       if (saveToStorage) {
@@ -82,16 +81,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // --- 2. Marquee (Texto desplazable corregido) ---
+    // --- 2. Marquee (Texto desplazable tipo Letrero) ---
+    // Usamos SOLO UN span, ya no necesitamos el B para el bucle infinito
     const marqA = document.createElement('span');
-    marqA.className = 'marq'; marqA.style.position = 'absolute'; marqA.style.whiteSpace = 'nowrap';
-    marqA.style.top = '0'; marqA.style.color = '#0f0'; marqA.style.textShadow = '0 0 8px #0f0';
-    marqA.style.display = 'none'; marqA.style.left = '0'; marqA.style.transform = 'none';
+    marqA.className = 'marq'; 
+    marqA.style.position = 'absolute'; 
+    marqA.style.whiteSpace = 'nowrap';
+    marqA.style.top = '0'; 
+    marqA.style.color = '#0f0'; 
+    marqA.style.textShadow = '0 0 8px #0f0';
+    marqA.style.display = 'none'; 
+    marqA.style.left = '0';
     display.appendChild(marqA);
 
     function hideMarquee() {
       if (marquee.rafId) cancelAnimationFrame(marquee.rafId);
-      marquee.running = false; marquee.lastTs = null;
+      marquee.running = false; 
+      marquee.lastTs = null;
       marqA.style.display = 'none';
       displayText.style.display = 'inline-block';
     }
@@ -103,13 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
       marqA.style.display = 'inline-block';
       displayText.style.display = 'none';
 
+      // Esperamos a que se renderice para medir anchos
       requestAnimationFrame(() => {
         const containerW = display.clientWidth;
         const textW = marqA.offsetWidth;
-        marquee.width = textW;
         
-        // CORRECCIÓN: Inicia totalmente a la derecha
+        // CORRECCIÓN: Posición inicial = Ancho del contenedor (totalmente a la derecha fuera de vista)
         marquee.x = containerW; 
+        marquee.width = textW;
         marquee.lastTs = null;
 
         function step(ts) {
@@ -118,11 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const dt = (ts - marquee.lastTs) / 1000;
           marquee.lastTs = ts;
 
+          // Mover a la izquierda
           marquee.x -= marquee.speed * dt;
 
-          // CORRECCIÓN: Resetea solo cuando el texto salió COMPLETAMENTE por la izquierda
+          // CORRECCIÓN: Si la posición X es menor que el ancho negativo del texto
+          // (significa que el texto ya salió completamente por la izquierda)
+          // entonces reseteamos a la derecha.
           if (marquee.x < -marquee.width) {
-             marquee.x = containerW; // Vuelve a empezar desde la derecha limpia
+             marquee.x = containerW; 
           }
 
           marqA.style.transform = `translateX(${marquee.x}px)`;
@@ -171,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const percentageDisplay = Math.round(vol * 100);
       volPercentage.textContent = percentageDisplay + '%';
 
-      // --- BARRA VISUAL (Método Cortina) ---
       const sliderWidth = volumeSlider.offsetWidth || 300; 
       const thumbWidth = 20; 
       const centerPos = (vol * (sliderWidth - thumbWidth)) + (thumbWidth / 2);
@@ -230,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 5. Eventos ---
     
-    // Estado inicial
     radio.classList.add('off');
     display.classList.add('off');
     setDisplay('Off', { blink: false, off: true, marquee: false });
@@ -252,10 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
         knobPower.classList.remove('off');
         setDisplay('Seleccione una emisora', { blink: true, off: false, marquee: false });
         syncVolume(volumeSlider.value);
-        
-        // Recalcular textos al encender (por si la fuente no había cargado bien antes)
+        // Re-chequear textos al encender
         document.querySelectorAll('.preset:not(.add-btn)').forEach(btn => fitButtonText(btn));
-
       } else {
         radio.classList.add('off');
         display.classList.add('off');
@@ -319,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SW
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js?ver=20').catch(() => {});
+      navigator.serviceWorker.register('./service-worker.js?ver=21').catch(() => {});
     }
 
 });
