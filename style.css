@@ -48,7 +48,7 @@ body {
   background: #000;
   border: 2px solid #333;
   border-radius: 8px;
-  overflow: hidden; /* IMPORTANTE: Oculta el texto que sale */
+  overflow: hidden;
   position: relative;
   margin-bottom: 16px;
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(0,255,0,0.25);
@@ -134,8 +134,11 @@ body {
   transition: transform .1s ease;
 }
 .knob:hover { transform: translateY(-2px); }
-.knob.off { background: linear-gradient(145deg, #ff6b6b, #c92a2a); }
-#knob-mute.off { background: linear-gradient(145deg, #51cf66, #2f9e44); }
+
+/* Estados de Botones */
+.knob.off { background: linear-gradient(145deg, #ff6b6b, #c92a2a); } /* Rojo (Power Off) */
+#knob-mute.off { background: linear-gradient(145deg, #51cf66, #2f9e44); } /* Verde (Mute Activado) */
+
 .icon { width: 22px; height: 22px; stroke: #333; stroke-width: 2; fill: none; }
 .knob-label { font-size: 0.8rem; color: #333; font-weight: 600; text-transform: uppercase; }
 
@@ -158,30 +161,19 @@ body {
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
-  /* Flex para centrado perfecto */
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
-  text-align: center;
+  display: flex; align-items: center; justify-content: center; text-align: center;
 }
 .preset:hover { background: linear-gradient(145deg, #64b5f6, #1976d2); color: #fff; transform: translateY(-2px); }
 .preset.active { background: linear-gradient(145deg, #ff9800, #f57c00); color: #fff; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3); }
 
-/* --- ADAPTACIÓN DE TEXTO --- */
-.preset.small-text {
-  font-size: 0.7rem; 
-}
-
+/* Texto Adaptable */
+.preset.small-text { font-size: 0.7rem; }
 .preset.multiline {
   font-size: 0.7rem; 
-  white-space: normal; /* Permite saltos */
+  white-space: normal; 
   line-height: 1.1;
   word-wrap: break-word; 
   padding: 2px;
-  /* Mantiene centrado vertical y horizontal */
-  justify-content: center;
-  align-items: center;
-  text-align: center;
 }
 
 .add-btn {
@@ -205,6 +197,42 @@ body {
 }
 .vol-percentage { font-size: 0.8rem; color: #333; font-weight: bold; }
 
+/* MODAL STYLES */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000;
+  display: flex; justify-content: center; align-items: center;
+  opacity: 1; transition: opacity 0.3s ease;
+  backdrop-filter: blur(3px);
+}
+.modal-overlay.hidden { opacity: 0; pointer-events: none; }
+
+.modal-box {
+  background: #f5f5f5; padding: 20px;
+  border-radius: 12px; width: 90%; max-width: 320px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  transform: translateY(0); transition: transform 0.3s ease;
+  display: flex; flex-direction: column; gap: 12px;
+  border: 1px solid #ccc;
+}
+.modal-overlay.hidden .modal-box { transform: translateY(-30px); }
+
+.modal-box h3 { margin: 0 0 5px 0; color: #333; text-align: center; }
+.modal-box input {
+  padding: 10px; border: 1px solid #bbb; border-radius: 6px;
+  outline: none; font-size: 1rem;
+}
+.modal-box input:focus { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.2); }
+
+.modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px; }
+.modal-btn {
+  padding: 8px 16px; border: none; border-radius: 6px;
+  cursor: pointer; font-weight: bold; transition: filter 0.2s;
+}
+.modal-btn:hover { filter: brightness(1.1); }
+.modal-btn.save { background: linear-gradient(145deg, #66bb6a, #43a047); color: white; }
+.modal-btn.cancel { background: linear-gradient(145deg, #ef5350, #e53935); color: white; }
+
 .footer { margin-top: 20px; font-size: 0.8rem; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); text-align: center; }
 .footer a { color: #ffd700; text-decoration: none; font-weight: bold; }
 
@@ -212,6 +240,7 @@ body {
   .presets { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .radio { width: 95vw; padding: 12px; }
 }
+
 
 
 
