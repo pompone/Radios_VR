@@ -26,7 +26,7 @@ function loadCustomPresets() {
     createPresetButton(radioData.name, radioData.url, false);
   });
   // Movemos el botón "+" siempre al final
-  presetsContainer.appendChild(btnAdd);
+  if(btnAdd) presetsContainer.appendChild(btnAdd);
 }
 
 function createPresetButton(name, url, saveToStorage = true) {
@@ -40,7 +40,11 @@ function createPresetButton(name, url, saveToStorage = true) {
   btn.addEventListener('click', () => playStation(btn));
 
   // Insertar antes del botón Add
-  presetsContainer.insertBefore(btn, btnAdd);
+  if(btnAdd) {
+      presetsContainer.insertBefore(btn, btnAdd);
+  } else {
+      presetsContainer.appendChild(btn);
+  }
 
   if (saveToStorage) {
     const stored = JSON.parse(localStorage.getItem('myCustomRadios') || '[]');
@@ -115,7 +119,6 @@ function setDisplay(text, { blink = false, off = false, marquee: useMarquee = fa
 
 // Función para controlar la animación del parlante
 function updateSpeakerAnimation() {
-  // Solo animar si está sonando Y no está muteado Y el volumen > 0
   if (!player.paused && !player.muted && player.volume > 0.01 && isOn) {
     radio.classList.add('playing');
   } else {
@@ -127,24 +130,42 @@ function setMuted(state) {
   isMuted = state;
   player.muted = state;
   knobMute.classList.toggle('off', state);
-  updateSpeakerAnimation(); // Actualizar animación al mutear
+  updateSpeakerAnimation();
 }
 
 function syncVolume(v) {
+  // Asegurar rango 0-1
   const vol = Math.max(0, Math.min(1, parseFloat(v) || 0));
   player.volume = vol;
   
-  const percentage = Math.round(vol * 100);
-  volPercentage.textContent = percentage + '%';
+  const percentageDisplay = Math.round(vol * 100);
+  volPercentage.textContent = percentageDisplay + '%';
   
-  // Gradiente Barra
-  volumeSlider.style.background = `linear-gradient(to right, #4CAF50 0%, #FFEB3B 50%, #F44336 ${percentage}%, #ddd ${percentage}%, #ddd 100%)`;
+  // --- CORRECCIÓN GEOMÉTRICA DE LA BARRA ---
+  // Obtenemos el ancho real del slider en pantalla
+  const sliderWidth = volumeSlider.offsetWidth || 300; // Fallback 300px
+  const thumbWidth = 20; // Ancho del botón en CSS (20px)
 
+  // Calculamos dónde está el CENTRO del botón en píxeles
+  // Fórmula: (volumen * (espacio_recorrido)) + (mitad_del_boton)
+  const centerPosition = (vol * (sliderWidth - thumbWidth)) + (thumbWidth / 2);
+  
+  // Convertimos esa posición a porcentaje del ancho total
+  const gradientPercent = (centerPosition / sliderWidth) * 100;
+
+  // Aplicamos el gradiente usando ese porcentaje corregido
+  volumeSlider.style.background = `linear-gradient(to right, 
+    #4CAF50 0%, 
+    #FFEB3B 50%, 
+    #F44336 ${gradientPercent}%, 
+    #ddd ${gradientPercent}%, 
+    #ddd 100%)`;
+
+  // Lógica de Mute / Animación
   if (vol <= 0.0001) {
-    // Si volumen es 0, actuamos como mute para la animación
     updateSpeakerAnimation();
   } else {
-    if (isMuted) setMuted(false); // Desmutear si sube volumen
+    if (isMuted) setMuted(false);
     updateSpeakerAnimation();
   }
 }
@@ -158,7 +179,6 @@ function playStation(presetBtn) {
   const src = presetBtn.dataset.src;
   if (!src) return;
 
-  // Si ya está sonando esta, pausar
   if (currentStation === src && !player.paused) {
     player.pause();
     updateSpeakerAnimation();
@@ -168,7 +188,6 @@ function playStation(presetBtn) {
     return;
   }
 
-  // Resetear clases active
   document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
   presetBtn.classList.add('active');
   
@@ -184,7 +203,7 @@ function playStation(presetBtn) {
       currentStation = src;
     })
     .catch(err => {
-      if (!isOn) return; // Ignorar error si se apagó
+      if (!isOn) return;
       console.error(err);
       radio.classList.remove('playing');
       setDisplay('Error conexión', { blink: false, off: false, marquee: false });
@@ -199,10 +218,11 @@ function playStation(presetBtn) {
 radio.classList.add('off');
 display.classList.add('off');
 setDisplay('Off', { blink: false, off: true, marquee: false });
-syncVolume(volumeSlider.value);
-loadCustomPresets(); // Cargar radios guardadas
 
-// Listeners existentes de radios predeterminadas
+// Forzamos un cálculo inicial con delay para asegurar que el DOM cargó el ancho
+setTimeout(() => syncVolume(volumeSlider.value), 100);
+loadCustomPresets();
+
 document.querySelectorAll('.preset:not(.add-btn)').forEach(p => {
   p.addEventListener('click', () => playStation(p));
 });
@@ -216,6 +236,8 @@ knobPower.addEventListener('click', () => {
     knobPower.classList.remove('off');
     setDisplay('Seleccione una emisora', { blink: true, off: false, marquee: false });
     updateSpeakerAnimation();
+    // Recalcular volumen al encender por si cambió el tamaño de ventana
+    syncVolume(volumeSlider.value);
   } else {
     radio.classList.add('off');
     display.classList.add('off');
@@ -239,24 +261,30 @@ knobMute.addEventListener('click', () => {
 });
 
 // Botón Agregar (+)
-btnAdd.addEventListener('click', () => {
-  // Usamos prompt simple para no complicar el HTML. Se podría hacer un modal más lindo.
-  const name = prompt("Ingrese el nombre de la radio (Ej: Mi Radio):");
-  if (!name) return;
-  
-  const url = prompt("Ingrese la URL del streaming (.mp3/aac):");
-  if (!url) return;
+if (btnAdd) {
+  btnAdd.addEventListener('click', () => {
+    const name = prompt("Ingrese el nombre de la radio (Ej: Mi Radio):");
+    if (!name) return;
+    
+    const url = prompt("Ingrese la URL del streaming (.mp3/aac):");
+    if (!url) return;
 
-  if (url.startsWith('http')) {
-      createPresetButton(name, url, true);
-      alert('Radio agregada correctamente.');
-  } else {
-      alert('URL inválida. Debe comenzar con http o https.');
-  }
-});
+    if (url.startsWith('http')) {
+        createPresetButton(name, url, true);
+        alert('Radio agregada correctamente.');
+    } else {
+        alert('URL inválida. Debe comenzar con http o https.');
+    }
+  });
+}
 
 // Inputs
 volumeSlider.addEventListener('input', e => syncVolume(e.target.value));
+
+// Actualizar gradiente al redimensionar ventana (responsive)
+window.addEventListener('resize', () => {
+    if(isOn) syncVolume(volumeSlider.value);
+});
 
 radio.addEventListener('wheel', (e) => {
   if (!isOn) return;
@@ -280,6 +308,6 @@ player.addEventListener('error', () => {
 // SW
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js?ver=17').catch(() => {});
+    navigator.serviceWorker.register('./service-worker.js?ver=18').catch(() => {});
   });
 }
