@@ -60,6 +60,18 @@
   
   <audio id="player"></audio>
   
+  <div id="modal-add" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>Agregar Nueva Radio</h3>
+      <input type="text" id="modal-name" placeholder="Nombre (Ej: Mi Radio)" autocomplete="off">
+      <input type="text" id="modal-url" placeholder="URL Streaming (http://...)" autocomplete="off">
+      <div class="modal-buttons">
+        <button id="btn-modal-cancel" class="modal-btn cancel">Cancelar</button>
+        <button id="btn-modal-save" class="modal-btn save">Guardar</button>
+      </div>
+    </div>
+  </div>
+  
   <div class="footer">
     Desarrollado por <a href="https://pompone.github.io/CV_Pompone.github.io" target="_blank">Alejandro M. Pompone</a>
   </div>
@@ -67,6 +79,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
