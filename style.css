@@ -138,6 +138,11 @@ body {
 /* Estados de Botones */
 .knob.off { background: linear-gradient(145deg, #ff6b6b, #c92a2a); } /* Rojo (Power Off) */
 #knob-mute.off { background: linear-gradient(145deg, #51cf66, #2f9e44); } /* Verde (Mute Activado) */
+/* Amarillo para Info Activo */
+#knob-info.active { 
+  background: linear-gradient(145deg, #ffeb3b, #fbc02d); 
+  box-shadow: inset 2px 2px 5px rgba(255,255,255,0.4), inset -2px -2px 5px rgba(0,0,0,0.1);
+}
 
 .icon { width: 22px; height: 22px; stroke: #333; stroke-width: 2; fill: none; }
 .knob-label { font-size: 0.8rem; color: #333; font-weight: 600; text-transform: uppercase; }
@@ -177,11 +182,85 @@ body {
 }
 
 .add-btn {
-  font-size: 1.2rem;
-  background: linear-gradient(145deg, #d4d4d4, #bababa);
+  /* Forzamos forma circular */
+  width: 42px; 
+  height: 42px;
+  border-radius: 50%; /* Círculo perfecto */
+  
+  /* Centrado en su celda de la grilla */
+  margin: auto; 
+  
+  /* Estilo metálico suave (similar a los knobs de control) */
+  background: linear-gradient(145deg, #ffffff, #dcdcdc);
   color: #555;
+  
+  /* Borde y relieve */
+  border: 2px solid #bbb;
+  box-shadow: 
+    inset 2px 2px 5px rgba(255,255,255,1), /* Brillo interno */
+    inset -2px -2px 5px rgba(0,0,0,0.1), /* Sombra interna */
+    3px 3px 6px rgba(0,0,0,0.2); /* Sombra externa */
+  
+  /* Tipografía */
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+  
+  /* Centrado del signo + */
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote suave */
 }
-.add-btn:hover { background: linear-gradient(145deg, #81c784, #4caf50); color: #fff; }
+
+/* Botón AGREGAR (+) Estilo "Botón Redondo Sutil" */
+.add-btn {
+  /* Forma circular */
+  width: 42px; 
+  height: 42px;
+  border-radius: 50%; 
+  margin: auto; 
+  
+  /* Estilo metálico suave */
+  background: linear-gradient(145deg, #ffffff, #dcdcdc);
+  color: #555;
+  
+  /* Borde y relieve */
+  border: 2px solid #bbb;
+  box-shadow: 
+    inset 2px 2px 5px rgba(255,255,255,1), 
+    inset -2px -2px 5px rgba(0,0,0,0.1), 
+    3px 3px 6px rgba(0,0,0,0.2);
+  
+  /* Tipografía */
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+  
+  display: flex; justify-content: center; align-items: center;
+  
+  transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+  /* Color Verde al pasar el mouse */
+  background: linear-gradient(145deg, #66bb6a, #43a047);
+  color: white;
+  border-color: #2e7d32;
+  
+  /* CAMBIO AQUÍ: Aumenta poquitito (1.05 en vez de 1.15) */
+  transform: scale(1.05);
+  
+  /* Sombra verde suave */
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.4);
+}
+
+.add-btn:active {
+  /* Al hacer clic se hunde un poco */
+  transform: scale(0.95);
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+}
 
 /* Volumen */
 .volume { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -224,6 +303,37 @@ body {
 }
 .modal-box input:focus { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.2); }
 
+/* Lista de Resultados de Búsqueda */
+.results-list {
+  position: absolute;
+  top: 100%; /* Justo debajo del input */
+  left: 0;
+  width: 100%;
+  max-height: 150px; /* Altura máxima con scroll */
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.results-list.hidden { display: none; }
+
+.result-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.2s;
+}
+.result-item:last-child { border-bottom: none; }
+.result-item:hover { background: #f0f4ff; }
+.result-name { font-weight: bold; color: #333; font-size: 0.9rem; }
+.result-info { font-size: 0.75rem; color: #666; }
+
 .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px; }
 .modal-btn {
   padding: 8px 16px; border: none; border-radius: 6px;
@@ -242,6 +352,27 @@ body {
 }
 
 
+/* Estilos extra para el Modal de Borrado */
+
+/* Botón Danger (Rojo fuerte para eliminar) */
+.modal-btn.danger {
+  background: linear-gradient(145deg, #e53935, #b71c1c);
+  color: white;
+  box-shadow: 0 4px 6px rgba(229, 57, 53, 0.3);
+}
+.modal-btn.danger:hover {
+  background: linear-gradient(145deg, #ff5252, #d32f2f);
+  transform: translateY(-2px);
+}
+
+/* Botón Cancel Neutral (Gris para no llamar la atención) */
+.modal-btn.cancel-neutral {
+  background: #e0e0e0;
+  color: #333;
+}
+.modal-btn.cancel-neutral:hover {
+  background: #d5d5d5;
+}
 
 
 

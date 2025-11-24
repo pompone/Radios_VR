@@ -28,6 +28,17 @@
         </div>
         <div class="knob-label">Mute</div>
       </div>
+
+      <div class="control">
+        <div class="knob" id="knob-info" title="Información">
+          <svg class="icon" viewBox="0 0 24 24">
+             <circle cx="12" cy="12" r="10"></circle>
+             <line x1="12" y1="16" x2="12" y2="12"></line>
+             <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        <div class="knob-label">Info</div>
+      </div>
       
       <div class="control">
         <div class="knob off" id="knob-power" title="Power">
@@ -41,12 +52,12 @@
     </div>
     
     <div class="presets" id="presets-container">
-      <button class="preset" data-freq="Radio Noventa 90.1 MHz" data-src="https://cast.tunzilla.com/http://www.radionoventa.com.ar:8000/Noventa_en_vivo.mp3">90.1</button>
-      <button class="preset" data-freq="LU16 92.7 MHz" data-src="https://radio01.ferozo.com/proxy/ra01001162?mp=/stream">92.7</button>
-      <button class="preset" data-freq="Radio del Sol 93.7 MHz" data-src="https://stream.hego.com.ar/listen/radio_del_sol/radio.mp3">93.7</button>
-      <button class="preset" data-freq="Slogan 94.7 MHz" data-src="https://stream.hego.com.ar/listen/radio_slogan/slogan.mp3">94.7</button>
-      <button class="preset" data-freq="Patagonia 95.9 MHz" data-src="https://streaming1.locucionar.com/proxy/patagoniafm?mp=/stream">95.9</button>
-      <button class="preset" data-freq="Eclipse 101.5 MHz" data-src="http://01.solumedia.com.ar:8746/stream">101.5</button>
+      <button class="preset" data-freq="Radio Noventa 90.1 MHz" data-info="La radio dedicada al Rock. Contacto: 2984 4671099" data-src="https://cast.tunzilla.com/http://www.radionoventa.com.ar:8000/Noventa_en_vivo.mp3">90.1</button>
+      <button class="preset" data-freq="LU16 92.7 MHz" data-info="Radio LU16 Río Negro - Villa Regina -Contacto: 2984 692 244" data-src="https://radio01.ferozo.com/proxy/ra01001162?mp=/stream">92.7</button>
+      <button class="preset" data-freq="Radio del Sol 93.7 MHz" data-info="La radio te acompaña - Las Heras 9, Villa Regina, Contacto: 2984574092" data-src="https://stream.hego.com.ar/listen/radio_del_sol/radio.mp3">93.7</button>
+      <button class="preset" data-freq="Slogan 94.7 MHz" data-info="Somos parte de tu vida. Contacto:0298 439-7805" data-src="https://stream.hego.com.ar/listen/radio_slogan/slogan.mp3">94.7</button>
+      <button class="preset" data-freq="Patagonia 95.9 MHz" data-info="La voz de la Patagonia. Contacto: 0298 467-1994" data-src="https://streaming1.locucionar.com/proxy/patagoniafm?mp=/stream">95.9</button>
+      <button class="preset" data-freq="Eclipse 101.5 MHz" data-info="La radio que eclipso el aburrimiento. Contacto:2984373876" data-src="http://01.solumedia.com.ar:8746/stream">101.5</button>
       
       <button class="preset add-btn" id="btn-add" title="Agregar Radio">+</button>
     </div>
@@ -63,11 +74,31 @@
   <div id="modal-add" class="modal-overlay hidden">
     <div class="modal-box">
       <h3>Agregar Nueva Radio</h3>
-      <input type="text" id="modal-name" placeholder="Nombre (Ej: Mi Radio)" autocomplete="off">
+      
+      <div style="position: relative; width: 100%;">
+        <input type="text" id="modal-name" placeholder="Nombre o Búsqueda..." autocomplete="off">
+        <div id="search-results" class="results-list hidden"></div>
+      </div>
+
       <input type="text" id="modal-url" placeholder="URL Streaming (http://...)" autocomplete="off">
+      <input type="hidden" id="modal-info-hidden"> 
+      
       <div class="modal-buttons">
         <button id="btn-modal-cancel" class="modal-btn cancel">Cancelar</button>
         <button id="btn-modal-save" class="modal-btn save">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div id="modal-delete" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>¿Eliminar Radio?</h3>
+      <p id="delete-msg" style="text-align: center; color: #555; margin: 10px 0;">
+        ¿Estás seguro?
+      </p>
+      
+      <div class="modal-buttons">
+        <button id="btn-delete-cancel" class="modal-btn cancel-neutral">Cancelar</button>
+        <button id="btn-delete-confirm" class="modal-btn danger">Eliminar</button>
       </div>
     </div>
   </div>
@@ -76,10 +107,12 @@
     Desarrollado por <a href="https://pompone.github.io/CV_Pompone.github.io" target="_blank">Alejandro M. Pompone</a>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <script src="radios_db.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
-
 
 
 
