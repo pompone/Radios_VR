@@ -1,5 +1,8 @@
 // --- service-worker.js ---
-const CACHE_NAME = 'radios-vr-v16'; // Subimos versión para limpiar caché vieja
+
+// Subí este número cuando hagas cambios importantes
+const CACHE_NAME = 'radios-vr-v17';
+
 const ASSETS = [
   './',
   './index.html',
@@ -9,53 +12,100 @@ const ASSETS = [
   './icono.ico',
   './icon-192.png',
   './icon-512.png'
-  // Agrega aquí screenshot-wide.png o fonts si las tienes
+  // Agregá acá screenshot-wide.png o fonts si las usás
 ];
 
+// -------------------- INSTALL --------------------
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
   self.skipWaiting();
 });
 
+// -------------------- ACTIVATE --------------------
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k))))
-    )
+    (async () => {
+      // Borrar cachés viejas
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.map((k) =>
+          k === CACHE_NAME ? Promise.resolve() : caches.delete(k)
+        )
+      );
+
+      // Tomar control de las pestañas abiertas
+      await self.clients.claim();
+
+      //  Forzar recarga de las ventanas para que usen la nueva versión
+      const clients = await self.clients.matchAll({ type: 'window' });
+      for (const client of clients) {
+        client.navigate(client.url);
+      }
+    })()
   );
-  self.clients.claim();
 });
 
+// -------------------- FETCH --------------------
 self.addEventListener('fetch', (event) => {
-  // 1. IMPORTANTE: Si es audio, NO cachear. Pasar directo a red.
-  if (event.request.url.includes('.mp3') || 
-      event.request.url.includes('stream') || 
-      event.request.destination === 'audio') {
-    return; 
+  const req = event.request;
+  const url = req.url;
+
+  // 1) No cachear audio (streams / mp3)
+  if (
+    url.includes('.mp3') ||
+    url.includes('stream') ||
+    req.destination === 'audio'
+  ) {
+    // Dejo que vaya directo a la red
+    return;
   }
 
-  // 2. Si no es GET, no cachear
-  if (event.request.method !== 'GET') return;
+  // 2) Solo cacheamos GET
+  if (req.method !== 'GET') return;
 
+  // 3) Para navegación (HTML / index): estrategia "network first"
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          // Si la red responde bien, guardamos copia fresca
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          return res;
+        })
+        .catch(() => {
+          // Si no hay red, devolvemos la versión cacheada
+          return caches.match('./index.html');
+        })
+    );
+    return;
+  }
+
+  // 4) Para CSS, JS, iconos, etc.: "cache first"
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(req).then((cached) => {
       if (cached) return cached;
 
-      return fetch(event.request).then((res) => {
-        // Chequear respuesta válida
-        if (!res || res.status !== 200 || res.type !== 'basic') {
+      return fetch(req)
+        .then((res) => {
+          // Respuesta válida
+          if (!res || res.status !== 200 || res.type !== 'basic') {
+            return res;
+          }
+
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
           return res;
-        }
-        // Clonar y guardar
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(event.request, copy));
-        return res;
-      }).catch(() => {
-        // Si falla red y no hay caché, devolver index (modo offline)
-        return caches.match('./index.html');
-      });
+        })
+        .catch(() => {
+          // Si no hay red ni caché, al menos devolvemos el index
+          return caches.match('./index.html');
+        });
     })
   );
 });
+
 
 
