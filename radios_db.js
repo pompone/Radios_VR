@@ -20,9 +20,8 @@ const stationDirectory = [
     },
     { 
         name: "Radio Disney", 
-       
         url: "https://26563.live.streamtheworld.com/DISNEY_ARG_BA_SC", 
-        info: "Solo éxitos. es una emisora de argentina para niños y adolescentes que transmite desde la ciudad de Buenos Aires en una frecuencia de 94.3 fm" 
+        info: "Solo éxitos. Es una emisora de Argentina para niños y adolescentes que transmite desde la ciudad de Buenos Aires en una frecuencia de 94.3 FM" 
     },
     { 
         name: "Los 40 Argentina", 
@@ -52,24 +51,22 @@ const stationDirectory = [
     { 
         name: "Pop Radio 101.5 Mhz", 
         url: "https://popradio.stweb.tv/popradio/live/playlist.m3u8", 
-        info: "La vida al aire. es una emisora de música que transmite entretenimiento y noticias de última hora de la ciudad de Buenos Aires" 
+        info: "La vida al aire. Es una emisora de música que transmite entretenimiento y noticias de última hora de la ciudad de Buenos Aires" 
     },
     { 
         name: "Rock & Pop", 
         url: "https://playerservices.streamtheworld.com/api/livestream-redirect/ROCKANDPOPAAC.aac", 
-        info: "Rock & Pop 95.9 MHz " 
+        info: "Rock & Pop 95.9 MHz" 
     },
     { 
         name: "Blue 100.7", 
         url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BLUE_FM_100_7AAC.aac", 
         info: "Blue FM es la emisora de radio de música Argentina que transmite desde la Ciudad Autónoma de Buenos Aires en 100.7 FM" 
-    }
+    },
     { 
         name: "Latina", 
         url: "https://stream-gtlc.telecentro.net.ar/hls/radiolatinahls/main.m3u8", 
-        info: "La radio de los clásicos. --FM Latina 101.1 es una emisora ​​de radio musical que emite desde la Ciudad Autónoma de Buenos Aires, Argentina. Comenzó a transmitir el 1 de junio de 2002" 
+        info: "La radio de los clásicos. FM Latina 101.1 es una emisora de radio musical que emite desde la Ciudad Autónoma de Buenos Aires, Argentina. Comenzó a transmitir el 1 de junio de 2002" 
     }
-
-    
-
 ];
+
