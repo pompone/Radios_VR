@@ -64,4 +64,12 @@ const stationDirectory = [
         url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BLUE_FM_100_7AAC.aac", 
         info: "Blue FM es la emisora de radio de música Argentina que transmite desde la Ciudad Autónoma de Buenos Aires en 100.7 FM" 
     }
+    { 
+        name: "Latina", 
+        url: "https://stream-gtlc.telecentro.net.ar/hls/radiolatinahls/main.m3u8", 
+        info: "La radio de los clásicos. --FM Latina 101.1 es una emisora ​​de radio musical que emite desde la Ciudad Autónoma de Buenos Aires, Argentina. Comenzó a transmitir el 1 de junio de 2002" 
+    }
+
+    
+
 ];
