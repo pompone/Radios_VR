@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return session.loadMedia(request).then(() => {
         pauseLocalPlayback();
+        syncVolume(volumeSlider.value);
         currentStation = 'playing';
         if (isInfoActive) {
           setDisplay(currentInfo, { blink: false, off: false, marquee: true });
@@ -319,9 +320,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    function syncVolume(v) {
+    function syncVolume(v, { sendToCast = true } = {}) {
       const vol = Math.max(0, Math.min(1, parseFloat(v) || 0));
       player.volume = vol;
+
+      const castSession = getCastSession();
+      if (sendToCast && castSession && typeof castSession.setVolume === 'function') {
+        castSession.setVolume(vol).catch((error) => {
+          console.error('No se pudo cambiar el volumen del televisor:', error);
+        });
+      }
+
       const percentageDisplay = Math.round(vol * 100);
       volPercentage.textContent = percentageDisplay + '%';
 
@@ -577,7 +586,9 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
     volumeSlider.addEventListener('input', e => syncVolume(e.target.value));
-    window.addEventListener('resize', () => { if(isOn) syncVolume(volumeSlider.value); });
+    window.addEventListener('resize', () => {
+      if(isOn) syncVolume(volumeSlider.value, { sendToCast: false });
+    });
     radio.addEventListener('wheel', (e) => {
       if (!isOn) return; e.preventDefault();
       let v = parseFloat(volumeSlider.value) || 0;
@@ -602,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js?ver=31').catch(() => {});
+      navigator.serviceWorker.register('./service-worker.js?ver=32').catch(() => {});
     }
 
 });
