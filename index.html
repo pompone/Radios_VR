@@ -5,9 +5,9 @@
 <link rel="icon" href="icono.ico" type="image/x-icon">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radios de Villa Regina</title>
-<link rel="manifest" href="manifest.json?v=30">
+<link rel="manifest" href="manifest.json?v=31">
 <meta name="theme-color" content="#333333">
-<link rel="stylesheet" href="style.css?v=30">
+<link rel="stylesheet" href="style.css?v=31">
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XTLQCMBD3Z"></script>
 <script>
@@ -36,6 +36,13 @@
           </svg>
         </div>
         <div class="knob-label">Mute</div>
+      </div>
+
+      <div class="control" id="cast-control" aria-hidden="true">
+        <div class="knob cast-knob" title="Enviar al televisor">
+          <google-cast-launcher aria-label="Enviar al televisor"></google-cast-launcher>
+        </div>
+        <div class="knob-label">TV</div>
       </div>
 
       <div class="control">
@@ -118,7 +125,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
-  <script src="radios_db.js?v=30"></script>
-  <script src="script.js?v=30"></script>
+  <script src="radios_db.js?v=31"></script>
+  <script src="script.js?v=31"></script>
+  <script async src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </body>
 </html>

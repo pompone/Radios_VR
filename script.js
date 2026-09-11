@@ -1,5 +1,13 @@
 // --- script.js ---
 
+// Google Cast invoca esta función cuando termina de cargar su API.
+window.__onGCastApiAvailable = function(isAvailable) {
+    window.__googleCastApiAvailable = isAvailable;
+    window.dispatchEvent(new CustomEvent('google-cast-api-available', {
+        detail: { isAvailable }
+    }));
+};
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Elementos DOM ---
@@ -9,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const knobPower = document.getElementById('knob-power');
     const knobMute = document.getElementById('knob-mute');
     const knobInfo = document.getElementById('knob-info'); 
+    const castControl = document.getElementById('cast-control');
     const presetsContainer = document.getElementById('presets-container');
     const btnAdd = document.getElementById('btn-add');
     const volumeSlider = document.getElementById('volume');
@@ -37,7 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentStation = null;
     let currentName = "";     
     let currentInfo = "";     
+    let currentStreamUrl = "";
     let savedVolume = 0.5; 
+    let castInitialized = false;
     
     // Variable temporal para saber qué borrar
     let itemToDelete = null; 
@@ -46,6 +57,111 @@ document.addEventListener('DOMContentLoaded', () => {
     let marquee = { running: false, rafId: null, lastTs: null, x: 0, speed: 65, width: 0 }; 
 
     // --- 1. Inicialización ---
+
+    function setCastControlVisible(isVisible) {
+      if (!castControl) return;
+      castControl.classList.toggle('cast-available', isVisible);
+      castControl.setAttribute('aria-hidden', String(!isVisible));
+    }
+
+    function getCastSession() {
+      if (!castInitialized || !window.cast || !cast.framework) return null;
+      return cast.framework.CastContext.getInstance().getCurrentSession();
+    }
+
+    function getCastContentType(src) {
+      const cleanSrc = src.toLowerCase().split('?')[0];
+      if (cleanSrc.endsWith('.m3u8')) return 'application/x-mpegURL';
+      if (cleanSrc.endsWith('.ogg') || cleanSrc.endsWith('.oga')) return 'audio/ogg';
+      if (cleanSrc.endsWith('.wav')) return 'audio/wav';
+      if (cleanSrc.endsWith('.aac')) return 'audio/aac';
+      return 'audio/mpeg';
+    }
+
+    function pauseLocalPlayback() {
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+      try { player.pause(); } catch {}
+      player.removeAttribute('src');
+      try { player.load(); } catch {}
+      updateSpeakerAnimation();
+    }
+
+    function loadCurrentStationOnCast() {
+      const session = getCastSession();
+      if (!session || !currentStreamUrl) return Promise.resolve(false);
+
+      const mediaInfo = new chrome.cast.media.MediaInfo(
+        currentStreamUrl,
+        getCastContentType(currentStreamUrl)
+      );
+      mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
+      mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+      mediaInfo.metadata.title = currentName;
+      mediaInfo.metadata.subtitle = currentInfo || 'Radios de Villa Regina';
+
+      const request = new chrome.cast.media.LoadRequest(mediaInfo);
+      request.autoplay = true;
+
+      return session.loadMedia(request).then(() => {
+        pauseLocalPlayback();
+        currentStation = 'playing';
+        if (isInfoActive) {
+          setDisplay(currentInfo, { blink: false, off: false, marquee: true });
+        } else {
+          setDisplay(currentName, { blink: false, off: false, marquee: true });
+        }
+        return true;
+      }).catch((error) => {
+        console.error('No se pudo enviar la radio al televisor:', error);
+        setDisplay('Error al enviar a TV', { blink: false, off: false, marquee: false });
+        return false;
+      });
+    }
+
+    function initializeCastApi() {
+      if (castInitialized || !window.cast || !window.chrome || !chrome.cast) return;
+
+      const castContext = cast.framework.CastContext.getInstance();
+      castContext.setOptions({
+        receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+        autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+      });
+
+      castInitialized = true;
+
+      const updateCastVisibility = () => {
+        const hasDevices = castContext.getCastState() !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
+        setCastControlVisible(hasDevices);
+      };
+
+      castContext.addEventListener(
+        cast.framework.CastContextEventType.CAST_STATE_CHANGED,
+        updateCastVisibility
+      );
+
+      castContext.addEventListener(
+        cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+        (event) => {
+          if (
+            event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
+            event.sessionState === cast.framework.SessionState.SESSION_RESUMED
+          ) {
+            loadCurrentStationOnCast();
+          }
+        }
+      );
+
+      updateCastVisibility();
+    }
+
+    setCastControlVisible(false);
+    window.addEventListener('google-cast-api-available', (event) => {
+      if (event.detail.isAvailable) initializeCastApi();
+    });
+    if (window.__googleCastApiAvailable) initializeCastApi();
 
     function loadCustomPresets() {
       const stored = JSON.parse(localStorage.getItem('myCustomRadios') || '[]');
@@ -241,11 +357,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       currentName = freq;
       currentInfo = info;
+      currentStreamUrl = src;
 
       document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
       presetBtn.classList.add('active');
       
       setDisplay('Conectando...', { blink: true, off: false, marquee: false });
+
+      if (getCastSession()) {
+          loadCurrentStationOnCast();
+          return;
+      }
 
       if (hls) {
           hls.destroy();
@@ -410,6 +532,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSpeakerAnimation();
         document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
         currentStation = null;
+        currentStreamUrl = '';
+        if (getCastSession()) {
+            cast.framework.CastContext.getInstance().endCurrentSession(true);
+        }
         if(isMuted) { isMuted = false; knobMute.classList.remove('off'); }
         isInfoActive = false; knobInfo.classList.remove('active'); 
         setDisplay('Off', { blink: false, off: true, marquee: false });
@@ -476,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js?ver=28').catch(() => {});
+      navigator.serviceWorker.register('./service-worker.js?ver=31').catch(() => {});
     }
 
 });
