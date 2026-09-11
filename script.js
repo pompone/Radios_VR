@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentStreamUrl = "";
     let savedVolume = 0.5; 
     let castInitialized = false;
+    let castVolumeSession = null;
+    let castVolumeHandler = null;
     
     // Variable temporal para saber qué borrar
     let itemToDelete = null; 
@@ -67,6 +69,49 @@ document.addEventListener('DOMContentLoaded', () => {
     function getCastSession() {
       if (!castInitialized || !window.cast || !cast.framework) return null;
       return cast.framework.CastContext.getInstance().getCurrentSession();
+    }
+
+    function syncVolumeFromCast(session, event = null) {
+      if (!session) return;
+
+      const eventVolume = event && typeof event.volume === 'number' ? event.volume : null;
+      const sessionVolume = typeof session.getVolume === 'function' ? session.getVolume() : null;
+      const volume = eventVolume ?? sessionVolume;
+      const eventMuted = event && typeof event.isMute === 'boolean' ? event.isMute : null;
+      const sessionMuted = typeof session.isMute === 'function' ? session.isMute() : false;
+      const muted = eventMuted ?? sessionMuted;
+
+      if (typeof volume === 'number' && Number.isFinite(volume)) {
+        volumeSlider.value = Math.max(0, Math.min(1, volume));
+        syncVolume(volumeSlider.value, { sendToCast: false });
+      }
+
+      isMuted = Boolean(muted) || Number(volume) <= 0.001;
+      knobMute.classList.toggle('off', isMuted);
+    }
+
+    function detachCastVolumeSync() {
+      if (castVolumeSession && castVolumeHandler) {
+        castVolumeSession.removeEventListener(
+          cast.framework.SessionEventType.VOLUME_CHANGED,
+          castVolumeHandler
+        );
+      }
+      castVolumeSession = null;
+      castVolumeHandler = null;
+    }
+
+    function attachCastVolumeSync(session) {
+      if (!session || castVolumeSession === session) return;
+      detachCastVolumeSync();
+
+      castVolumeSession = session;
+      castVolumeHandler = (event) => syncVolumeFromCast(session, event);
+      session.addEventListener(
+        cast.framework.SessionEventType.VOLUME_CHANGED,
+        castVolumeHandler
+      );
+      syncVolumeFromCast(session);
     }
 
     function getCastContentType(src) {
@@ -107,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return session.loadMedia(request).then(() => {
         pauseLocalPlayback();
-        syncVolume(volumeSlider.value);
         currentStation = 'playing';
         if (isInfoActive) {
           setDisplay(currentInfo, { blink: false, off: false, marquee: true });
@@ -150,7 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
             event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
             event.sessionState === cast.framework.SessionState.SESSION_RESUMED
           ) {
+            attachCastVolumeSync(event.session || getCastSession());
             loadCurrentStationOnCast();
+          } else if (
+            event.sessionState === cast.framework.SessionState.SESSION_ENDED ||
+            event.sessionState === cast.framework.SessionState.SESSION_START_FAILED
+          ) {
+            detachCastVolumeSync();
           }
         }
       );
@@ -326,7 +376,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const castSession = getCastSession();
       if (sendToCast && castSession && typeof castSession.setVolume === 'function') {
-        castSession.setVolume(vol).catch((error) => {
+        const requests = [castSession.setVolume(vol)];
+        if (vol > 0.001 && typeof castSession.isMute === 'function' && castSession.isMute()) {
+          requests.push(castSession.setMute(false));
+        }
+        Promise.all(requests).catch((error) => {
           console.error('No se pudo cambiar el volumen del televisor:', error);
         });
       }
@@ -514,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
         p.addEventListener('click', () => playStation(p));
     });
 
-    setTimeout(() => syncVolume(volumeSlider.value), 100);
+    setTimeout(() => syncVolume(volumeSlider.value, { sendToCast: false }), 100);
 
     // Power
     knobPower.addEventListener('click', () => {
@@ -524,7 +578,12 @@ document.addEventListener('DOMContentLoaded', () => {
         display.classList.remove('off');
         knobPower.classList.remove('off');
         setDisplay('Seleccione una emisora', { blink: true, off: false, marquee: false });
-        syncVolume(volumeSlider.value); 
+        const castSession = getCastSession();
+        if (castSession) {
+          syncVolumeFromCast(castSession);
+        } else {
+          syncVolume(volumeSlider.value);
+        }
         document.querySelectorAll('.preset:not(.add-btn)').forEach(btn => fitButtonText(btn));
       } else {
         radio.classList.add('off');
@@ -554,6 +613,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mute
     knobMute.addEventListener('click', () => {
       if (!isOn) return;
+
+      const castSession = getCastSession();
+      if (castSession && typeof castSession.setMute === 'function') {
+          const targetMuted = !(typeof castSession.isMute === 'function' && castSession.isMute());
+          castSession.setMute(targetMuted).then(() => {
+              syncVolumeFromCast(castSession, {
+                  volume: castSession.getVolume(),
+                  isMute: targetMuted
+              });
+          }).catch((error) => {
+              console.error('No se pudo cambiar el mute del televisor:', error);
+          });
+          return;
+      }
+
       if (isMuted) {
           let target = savedVolume > 0.01 ? savedVolume : 0.5;
           volumeSlider.value = target;
@@ -613,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js?ver=32').catch(() => {});
+      navigator.serviceWorker.register('./service-worker.js?ver=33').catch(() => {});
     }
 
 });

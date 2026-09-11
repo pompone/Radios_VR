@@ -1,7 +1,7 @@
 // --- service-worker.js ---
 
 // Subí este número cuando hagas cambios importantes
-const CACHE_NAME = 'radios-vr-v32';
+const CACHE_NAME = 'radios-vr-v33';
 
 const ASSETS = [
   './',
