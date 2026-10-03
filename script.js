@@ -687,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js?ver=33').catch(() => {});
+      navigator.serviceWorker.register('./service-worker.js?ver=34').catch(() => {});
     }
 
 });
